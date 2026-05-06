@@ -125,25 +125,30 @@
       heroPhoto.addEventListener("pointerenter", function () {
         dot.classList.add("is-on-photo");
         ring.classList.add("is-on-photo");
-        if (heroBadge) heroBadge.classList.add("is-on");
+        if (heroBadge) heroBadge.classList.add("is-visible");
       });
       heroPhoto.addEventListener("pointerleave", function () {
         dot.classList.remove("is-on-photo");
         ring.classList.remove("is-on-photo");
-        if (heroBadge) heroBadge.classList.remove("is-on");
+        if (heroBadge) heroBadge.classList.remove("is-visible");
       });
+      // Update badge X/Y on every mousemove so its center sticks to the
+      // cursor tip exactly (no easing, no lag). The CSS uses --badge-x
+      // and --badge-y inside the transform.
+      if (heroBadge) {
+        heroPhoto.addEventListener("pointermove", function (e) {
+          heroBadge.style.setProperty("--badge-x", e.clientX + "px");
+          heroBadge.style.setProperty("--badge-y", e.clientY + "px");
+        }, { passive: true });
+      }
     }
-    // Badge position lerp — use cursor mx/my that pf-cur already tracks.
-    // Bigger ease so it tracks the cursor responsively without lag.
+    // Scale-only loop: badge shrinks when not engaged, grows when over photo.
+    // Position is set instantly above; only the scale is eased here.
     if (heroBadge) {
-      var bX = mx, bY = my, bS = .5, bST = .5;
+      var bS = .5, bST = .5;
       function badgeLoop() {
-        bX += (mx - bX) * 0.22;
-        bY += (my - bY) * 0.22;
-        bST = heroBadge.classList.contains("is-on") ? 1 : .5;
+        bST = heroBadge.classList.contains("is-visible") ? 1 : .5;
         bS += (bST - bS) * 0.12;
-        heroBadge.style.setProperty("--badge-x", bX.toFixed(1) + "px");
-        heroBadge.style.setProperty("--badge-y", bY.toFixed(1) + "px");
         heroBadge.style.setProperty("--badge-s", bS.toFixed(3));
         requestAnimationFrame(badgeLoop);
       }
@@ -1233,9 +1238,12 @@
     var photo = document.querySelector(".v4-hero-photo");
     if (!photo) return;
     var aurora = photo.querySelector(".v4-aurora");
-    var cutout = photo.querySelector(".v4-hero-photo-cutout");
+    // CSS classes use the doubled "v4-v4-" prefix (the build produced that
+    // namespace). Fall back to the single-prefix selector so older markup
+    // keeps working.
+    var cutout = photo.querySelector(".v4-v4-hero-photo-cutout, .v4-hero-photo-cutout");
     var orb    = photo.querySelector(".v4-hero-orb");
-    var chips  = photo.querySelectorAll(".v4-hero-decor-chip");
+    var chips  = photo.querySelectorAll(".v4-v4-hero-decor-chip, .v4-hero-decor-chip");
 
     setTimeout(function () { photo.classList.add("is-revealed"); }, 220);
 
@@ -1401,11 +1409,152 @@
     requestAnimationFrame(loop);
   }
 
+  // ============================================================
+  // 24. HERO BRUSH REVEAL — soft, persistent paint-stroke that
+  //     "scratches" a grayscale canvas overlay on top of the
+  //     full-color hero photo, revealing the colors underneath.
+  //
+  //     Architecture:
+  //       • <img> always renders full color (CSS).
+  //       • <canvas.v4-hero-reveal> sits on top, painted ONCE on
+  //         load/resize with a grayscale copy of the same image.
+  //       • pointermove → destination-out brush stamps with a soft
+  //         radial-gradient falloff erase circles in the canvas,
+  //         exposing the color photo below. Strokes accumulate.
+  //
+  //     Performance:
+  //       • Grayscale layer is never re-painted (resize only).
+  //       • Pointer events buffered to next rAF tick (one paint
+  //         pass per frame, no matter how many move events).
+  //       • Stamps interpolated between samples → continuous
+  //         stroke even on fast cursor sweeps. Spacing tuned to
+  //         brush radius so we don't oversample.
+  //       • DPR capped at 1.5 so high-density displays don't
+  //         eat fillrate on huge canvases.
+  // ============================================================
+  function initHeroBrushReveal() {
+    var photo  = document.querySelector(".v4-hero-photo");
+    if (!photo) return;
+    var img    = photo.querySelector(".v4-hero-img");
+    var cutout = photo.querySelector(".v4-v4-hero-photo-cutout, .v4-hero-photo-cutout");
+    if (!img || !cutout) return;
+    if (prefersReduced || isTouch || !canHover) return;
+
+    var canvas = cutout.querySelector(".v4-hero-reveal");
+    if (!canvas) {
+      canvas = document.createElement("canvas");
+      canvas.className = "v4-hero-reveal";
+      canvas.setAttribute("aria-hidden", "true");
+      cutout.insertBefore(canvas, img.nextSibling);
+    }
+    var ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    var BRUSH_RADIUS  = 90;   // CSS px — tune to taste
+    var STAMP_SPACING = 14;   // CSS px between stamps along a stroke
+    var DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+
+    var lastX = -1, lastY = -1;
+    var pending = [];
+    var rafQueued = false;
+
+    // Mimic the img's CSS object-fit:cover + object-position:center 15%
+    function paintGrayscale() {
+      if (!img.complete || !img.naturalWidth) return;
+      var w = canvas.width, h = canvas.height;
+      var iw = img.naturalWidth, ih = img.naturalHeight;
+      var ar = iw / ih, tar = w / h;
+      var dw, dh, dx, dy;
+      if (ar > tar) { dh = h; dw = h * ar; dx = (w - dw) * 0.5; dy = 0; }
+      else          { dw = w; dh = w / ar; dx = 0; dy = (h - dh) * 0.15; }
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      ctx.clearRect(0, 0, w, h);
+      // ctx.filter is supported in modern Chrome/Firefox/Safari 15+.
+      // Falls back to a flat draw on old Safari (still readable, just
+      // not desaturated — acceptable degradation).
+      ctx.filter = "grayscale(100%) contrast(1.08) brightness(.92)";
+      ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.restore();
+    }
+
+    function resize() {
+      var r = cutout.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      canvas.width  = Math.max(2, Math.round(r.width  * DPR));
+      canvas.height = Math.max(2, Math.round(r.height * DPR));
+      paintGrayscale();
+    }
+
+    function brushAt(px, py) {
+      var rad = BRUSH_RADIUS * DPR;
+      var g = ctx.createRadialGradient(px, py, 0, px, py, rad);
+      g.addColorStop(0,    "rgba(0,0,0,1)");
+      g.addColorStop(0.55, "rgba(0,0,0,0.55)");
+      g.addColorStop(1,    "rgba(0,0,0,0)");
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(px, py, rad, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function flushPending() {
+      rafQueued = false;
+      if (!pending.length) return;
+      for (var i = 0; i < pending.length; i++) {
+        var p = pending[i];
+        if (lastX < 0) {
+          brushAt(p.x, p.y);
+        } else {
+          // Interpolate between samples for a continuous stroke
+          var dx = p.x - lastX, dy = p.y - lastY;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          var steps = Math.max(1, Math.ceil(dist / (STAMP_SPACING * DPR)));
+          for (var s = 1; s <= steps; s++) {
+            var t = s / steps;
+            brushAt(lastX + dx * t, lastY + dy * t);
+          }
+        }
+        lastX = p.x; lastY = p.y;
+      }
+      pending.length = 0;
+    }
+
+    function onMove(e) {
+      // Recompute rect each move — robust to scrolling, breathing
+      // animation scale, and parallax translate on the cutout.
+      var r = canvas.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      var x = (e.clientX - r.left) * (canvas.width  / r.width);
+      var y = (e.clientY - r.top)  * (canvas.height / r.height);
+      pending.push({ x: x, y: y });
+      if (!rafQueued) {
+        rafQueued = true;
+        requestAnimationFrame(flushPending);
+      }
+    }
+    function onLeave() { lastX = -1; lastY = -1; }
+
+    if (img.complete && img.naturalWidth) resize();
+    else img.addEventListener("load", resize, { once: true });
+
+    photo.addEventListener("pointermove",  onMove,  { passive: true });
+    photo.addEventListener("pointerleave", onLeave, { passive: true });
+
+    var rzT = null;
+    window.addEventListener("resize", function () {
+      if (rzT) clearTimeout(rzT);
+      rzT = setTimeout(resize, 100);
+    }, { passive: true });
+  }
+
   function boot() {
     try {
       initCursor();
       initMagnetic();
       initHeroReveal();
+      initHeroBrushReveal();
       initSectionMode();
       initActiveNav();
       initCounters();

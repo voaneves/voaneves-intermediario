@@ -1581,8 +1581,11 @@ body.dark-mode .v4-drawer-panel{
 .v4-hero-status{
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: max-content;
   gap: 0;
-  padding: 7px 16px 7px 14px;
+  padding: 8px 16px 8px 14px;
   border-radius: 999px;
   background: rgba(255,255,255,.07);
   border: 1px solid rgba(255,255,255,.15);
@@ -1593,6 +1596,7 @@ body.dark-mode .v4-drawer-panel{
   color: var(--cream);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
 }
 .v4-hero-status::before{
   content: "";
@@ -1710,16 +1714,8 @@ body.dark-mode .v4-drawer-panel{
   100%{ transform: translate(18%,28%) scale(1.15); }
 }
 
-/* Aurora overlay: tint to keep left-side text readable */
-.v4-aurora::after{
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, rgba(10,10,10,.55) 0%, rgba(10,10,10,.18) 35%, transparent 60%),
-    linear-gradient(0deg, rgba(10,10,10,.45) 0%, transparent 50%);
-  pointer-events: none;
-}
+/* Aurora overlay removed: the previous dark gradient tint was muting
+   the orb/aurora glow and creating a vignette feel over the photo. */
 
 /* ── Orb: warm glow that tracks the cursor ───────────────── */
 .v4-hero-orb{
@@ -1752,13 +1748,10 @@ body.light-mode .v4-hero-orb{
 }
 
 /* ── Stage inner: the 3-D tilting frame that holds the photo ─
-   clip-path: ellipse() crops to oval.
-   No overflow:hidden (not needed with clip-path, and it would
-     create a rectangle clip before clip-path).
-   No will-change:transform (would create GPU compositing layer
-     that interferes with clip-path in some Chrome versions).
-   No isolation:isolate (stage-inner doesn't need its own blend
-     context; v4-hero-photo handles isolation for the orb). ────── */
+   Rectangular portrait with softly rounded corners. The previous
+   ellipse() clip-path was distorting the face — switched to
+   border-radius + overflow:hidden so the image keeps its natural
+   portrait proportions. ───────────────────────────────────── */
 .v4-hero-stage-inner{
   position: absolute;
   inset: 0;
@@ -1766,9 +1759,14 @@ body.light-mode .v4-hero-orb{
   transform-style: preserve-3d;
   transition: transform .8s cubic-bezier(.22,.61,.36,1);
   background: transparent;
-  /* THE FIX: ellipse crop centered at 42% vertically
-     so the head isn't cut off at the top */
-  clip-path: ellipse(50% 55% at 50% 42%);
+  border-radius: 28px;
+  overflow: hidden;
+  /* Safari clipping fix: forces the WebKit compositor to honor the
+     parent border-radius on transformed children. Solid white mask
+     (no gradient) means NO vignette / fade — the photo stays sharp
+     edge-to-edge inside the rounded rectangle. */
+  -webkit-mask-image: linear-gradient(#fff, #fff);
+          mask-image: linear-gradient(#fff, #fff);
 }
 .v4-hero-photo.is-active .v4-hero-stage-inner{
   transition: transform .15s linear;
@@ -1801,16 +1799,30 @@ body.light-mode .v4-hero-orb{
   width: 100% !important; height: 100% !important;
   object-fit: cover !important;
   object-position: center 15%;
-  /* grayscale base — hover in JS adds .is-active which we use below */
-  filter: grayscale(100%) contrast(1.08) brightness(.92) !important;
-  transition: filter .7s ease !important;
+  /* Bottom layer is now ALWAYS in full color. The grayscale lives on
+     the .v4-hero-reveal canvas overlay above, which the user erases
+     via mousemove (destination-out brush) to "scratch" the colors back. */
+  filter: contrast(1.04) saturate(1.06) !important;
   user-select: none;
   -webkit-user-drag: none;
   pointer-events: none;
 }
-.v4-hero-photo:hover .v4-hero-img,
-.v4-hero-photo.is-active .v4-hero-img{
-  filter: grayscale(0%) contrast(1.08) saturate(1.12) brightness(1) !important;
+
+/* ── Brush-reveal canvas ───────────────────────────────────
+   Sits on top of .v4-hero-img inside the cutout. JS paints a
+   grayscale copy of the photo into it once on load/resize, then
+   uses globalCompositeOperation = 'destination-out' with a soft
+   radial gradient on every pointermove to erase brush stamps,
+   revealing the colored image below. Strokes persist (we never
+   repaint the gray layer except on resize). ───────────────── */
+.v4-hero-reveal{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
 }
 
 /* Suppress deprecated elements that may linger in the DOM */
@@ -1974,10 +1986,29 @@ body.light-mode .v4-hero-orb{
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transform: translate(-50%, -50%);
+  /* Center of the badge tracks the cursor tip:
+       translate(--badge-x − 50%, --badge-y − 50%) snaps the badge's
+       geometric center onto (--badge-x, --badge-y) which the JS sets
+       to the live cursor coordinates while hovering the photo. */
+  transform:
+    translate(
+      calc(var(--badge-x, 0px) - 50%),
+      calc(var(--badge-y, 0px) - 50%)
+    )
+    scale(var(--badge-s, .5));
+  /* Only fade is animated — NO transform transition, so the badge
+     translates 1:1 with the cursor on every pointermove update. */
   transition: opacity .35s ease;
-  filter: drop-shadow(0 8px 24px rgba(0,0,0,.5));
+  /* Same blend the cursor (.pf-cur / .pf-ring) uses: difference
+     inverts the badge against whatever sits behind it, so text and
+     the center chip adapt automatically — no drop-shadow needed
+     (filter would create a stacking context that breaks blend, and
+     so would isolation: isolate, so neither is used here). */
+  mix-blend-mode: difference;
 }
+/* .is-visible is the canonical class (matches the spec).
+   .is-on kept as an alias so legacy code keeps working. */
+.v4-hero-badge.is-visible,
 .v4-hero-badge.is-on{ opacity: 1; }
 .v4-hero-badge svg{
   position: absolute;
