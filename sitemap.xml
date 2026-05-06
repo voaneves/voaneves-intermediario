@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<url>
+  <loc>https://voaneves.com/</loc>
+  <lastmod>2022-10-18T02:58:19+00:00</lastmod>
+  <changefreq>always</changefreq>
+  <priority>1.00</priority>
+</url>
+<url>
+  <loc>https://voaneves.com/timeline</loc>
+  <lastmod>2022-11-15T02:58:19+00:00</lastmod>
+  <priority>0.95</priority>
+</url>
+<url>
+  <loc>https://voaneves.com/loading.html</loc>
+  <lastmod>2022-11-15T02:58:19+00:00</lastmod>
+  <priority>0.85</priority>
+</url>
+<url>
+  <loc>https://voaneves.com/games.html</loc>
+  <lastmod>2022-11-15T02:58:19+00:00</lastmod>
+  <priority>0.85</priority>
+</url>
+<url>
+  <loc>https://voaneves.com/assets/cv-pt.pdf</loc>
+  <lastmod>2022-08-25T02:58:19+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://voaneves.com/assets/img/main.webp</loc>
+  <lastmod>2022-08-25T02:58:19+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://voaneves.com/blog</loc>
+  <lastmod>2022-10-20T02:58:19+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.70</priority>
+</url>
+<url>
+  <loc>https://voaneves.com/blog/somos-bons-ou-maus.html</loc>
+  <lastmod>2022-10-21T02:58:19+00:00</lastmod>
+  <priority>0.70</priority>
+</url>
+<url>
+  <loc>https://voaneves.com/blog/o-pobre-que-usa-iphone.html</loc>
+  <lastmod>2022-11-02T02:58:19+00:00</lastmod>
+  <priority>0.70</priority>
+</url>
+</urlset>

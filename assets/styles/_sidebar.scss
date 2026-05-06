@@ -1,0 +1,137 @@
+/* Sidebar */
+.sidebar {
+  @include flex-center;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 0;
+  background-color: var(--color-primary);
+  z-index: 4;
+  transition: width 0.4s cubic-bezier(0.57, 0.21, 0.69, 3.25) 0.4s;
+
+  &.open {
+    width: 100vw;
+    transition: width 0.4s ease-in-out;
+
+    .sidebar-toggle {
+      opacity: 1;
+
+      &::before {
+        transform: translateY(0) rotate(45deg);
+      }
+
+      &::after {
+        transform: translateY(0) rotate(-45deg);
+        box-shadow: 0 0 0 var(--color-primary);
+      }
+
+      &::before,
+      &::after {
+        opacity: 1;
+        width: 30px;
+        transition: box-shadow 0.2s ease-in-out 0.4s,
+          transform 0.4s cubic-bezier(0.57, 0.21, 0.69, 3.25) 0.8s,
+          width 0.4s cubic-bezier(0.57, 0.21, 0.69, 3.25) 1s;
+      }
+    }
+
+    .sidebar-wrapper {
+      visibility: visible;
+      opacity: 1;
+      transition: opacity 0.4s ease-in-out 0.4s;
+    }
+  }
+
+  &-toggle {
+    @include flex-center;
+    background-color: var(--color-opposite);
+    position: absolute;
+    top: 20px;
+    left: 25px;
+    height: 60px;
+    width: 60px;
+    border-radius: 50%;
+    border: none;
+    padding: 0 19px;
+    transition: transform 0.3s cubic-bezier(0.57, 0.21, 0.69, 3.25),
+      opacity 0.3s ease-in-out;
+    opacity: 0.5;
+
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      width: 20px;
+      height: 2px;
+      background-color: white;
+      transition: box-shadow 0.2s cubic-bezier(0.57, 0.21, 0.69, 3.25) 1.2s,
+        transform 0.4s cubic-bezier(0.57, 0.21, 0.69, 3.25) 0.4s,
+        width 0.4s cubic-bezier(0.57, 0.21, 0.69, 3.25) 0.8s;
+    }
+
+    &:active {
+      transform: scale(0.9);
+    }
+
+    &::before {
+      transform: translateY(-8px);
+    }
+    &::after {
+      transform: translateY(8px);
+      box-shadow: 0 -8px 0 white;
+    }
+  }
+
+  .sidebar-wrapper {
+    display: flex;
+    flex-direction: column;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out 0.4s, visibility 0s 0.8s;
+
+    .sidebar-menu {
+      display: flex;
+      flex-direction: column;
+      grid-template-columns: 1fr;
+      padding: 15px 0;
+
+      .control {
+        display: inline-block;
+        margin: 10px 0;
+        border: none;
+        width: fit-content;
+        border-radius: 10px;
+        background-color: transparent;
+        padding: min(max(7px, 1vw), 10px);
+        color: var(--color-white);
+        font-size: max(2rem, 3vmax);
+        font-weight: 800;
+        opacity: 0.1;
+        transition: opacity 0.4s ease-in-out;
+
+        &:hover {
+          opacity: 1;
+        }
+      }
+
+      .active-btn {
+        opacity: 1;
+        background-color: var(--color-secondary) !important;
+        color: white;
+      }
+    }
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sidebar {
+    &-toggle {
+      &:hover {
+        transform: scale(1.2);
+        opacity: 1;
+      }
+    }
+  }
+}

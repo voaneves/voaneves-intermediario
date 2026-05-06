@@ -1,0 +1,64 @@
+.msgbox-area {
+  max-height: calc(100% - 15px);
+  position: fixed;
+  bottom: 25px;
+  right: 0px;
+}
+
+.msgbox-box {
+  background-color: var(--color-white);
+  box-shadow: 1px 4px 15px var(--color-primary);
+  margin: 0 10px 1.5rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  max-width: 400px;
+  border-radius: 12px;
+  transition: opacity 0.4s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+  will-change: opacity;
+
+  &.msgbox-box-hide {
+    opacity: 0;
+  }
+}
+
+.msgbox-title {
+  padding: 1.5rem 0 0 1.5rem;
+  color: var(--color-primary);
+}
+
+.msgbox-legend {
+  padding: 0 0 0 1.5rem;
+  color: var(--color-primary);
+}
+
+.msgbox-content {
+  font-size: 1rem;
+  padding: 0 1.5rem 1.5rem 1.5rem;
+  padding-bottom: 0.75rem;
+  flex-shrink: 1;
+  color: var(--color-primary);
+}
+
+.msgbox-command {
+  padding: 1.5rem;
+  padding-top: 0.75rem;
+  display: flex;
+}
+
+.msgbox-close {
+  color: var(--color-primary);
+  text-decoration: none;
+  flex-grow: 0;
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 10px;
+  position: relative;
+  transition: color 0.4s cubic-bezier(0.455, 0.03, 0.515, 0.955),
+    background-color 0.4s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+
+  &:hover {
+    color: white;
+    background-color: var(--color-secondary);
+  }
+}
