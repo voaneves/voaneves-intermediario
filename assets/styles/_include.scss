@@ -89,3 +89,123 @@
   -webkit-justify-content: $value;
   justify-content: $value;
 }
+
+// =============================================================================
+// Responsive design — breakpoints + media-query mixins
+// =============================================================================
+//
+// Standard breakpoint scale. Names ('xs', 'sm', etc.) are stable so consuming
+// code stays unchanged if the px values are tweaked later.
+//
+//   xs   480px   small phones
+//   sm   600px   legacy phone breakpoint (matches the existing @media)
+//   md   768px   tablets / large phones
+//   lg   900px   small laptops, big tablets
+//   xl  1200px   desktops
+//   xxl 1600px   wide desktops
+//
+$breakpoints: (
+  "xs":  480px,
+  "sm":  600px,
+  "md":  768px,
+  "lg":  900px,
+  "xl":  1200px,
+  "xxl": 1600px,
+);
+
+// Mobile-first override. Use to shrink/restyle from a breakpoint DOWN.
+//
+//   .card {
+//     padding: 32px;
+//     @include respond-to("md") { padding: 16px; }   // tablets & phones
+//   }
+//
+@mixin respond-to($name) {
+  @if not map-has-key($breakpoints, $name) {
+    @warn "respond-to: unknown breakpoint `#{$name}`. Available: #{map-keys($breakpoints)}.";
+  } @else {
+    @media screen and (max-width: map-get($breakpoints, $name)) {
+      @content;
+    }
+  }
+}
+
+// Mobile-first progressive enhancement. Use to layer styles UP from a breakpoint.
+//
+//   .grid {
+//     grid-template-columns: 1fr;                    // mobile default
+//     @include respond-from("lg") {                  // ≥ 901px
+//       grid-template-columns: repeat(3, 1fr);
+//     }
+//   }
+//
+@mixin respond-from($name) {
+  @if not map-has-key($breakpoints, $name) {
+    @warn "respond-from: unknown breakpoint `#{$name}`. Available: #{map-keys($breakpoints)}.";
+  } @else {
+    @media screen and (min-width: map-get($breakpoints, $name) + 1) {
+      @content;
+    }
+  }
+}
+
+// Range query — apply only INSIDE a band (exclusive lower, inclusive upper).
+//
+//   @include respond-between("sm", "lg") { ... }     // 601px … 900px (tablets)
+//
+@mixin respond-between($from, $to) {
+  @if not map-has-key($breakpoints, $from) or not map-has-key($breakpoints, $to) {
+    @warn "respond-between: unknown breakpoint(s).";
+  } @else {
+    @media screen
+      and (min-width: map-get($breakpoints, $from) + 1)
+      and (max-width: map-get($breakpoints, $to))
+    {
+      @content;
+    }
+  }
+}
+
+// =============================================================================
+// Fluid typography — linear interpolation via clamp()
+// =============================================================================
+//
+// Strip a CSS unit so the value can be used in arithmetic.
+//   strip-unit(1.5rem) → 1.5
+//
+@function strip-unit($value) {
+  @return $value / ($value * 0 + 1);
+}
+
+// Linear-interpolated responsive size.
+//
+// Inputs are NUMERIC pixel values (no units). The function builds a clamp()
+// that grows the size proportionally as the viewport scales between
+// $min-vw and $max-vw. Below $min-vw it floors at $min-px; above $max-vw it
+// caps at $max-px.
+//
+// Example:
+//   font-size: fluid(14, 16);
+//   // → clamp(0.875rem, calc(0.875rem + 2 * ((100vw - 320px) / 880)), 1rem)
+//   // 14px @ 320vw, 16px @ 1200vw, smooth between, clamped outside.
+//
+// Why this beats `clamp(1em, 5vw, 1.2em)`:
+//   The naive 5vw is too steep — at 384px viewport it already hits the cap.
+//   This formula sets the slope explicitly so the size actually scales
+//   across the WHOLE phone-to-desktop range.
+//
+@function fluid($min-px, $max-px, $min-vw: 320, $max-vw: 1200) {
+  $min-rem:    $min-px / 16;
+  $max-rem:    $max-px / 16;
+  $size-delta: $max-px - $min-px;
+  $vw-delta:   $max-vw - $min-vw;
+
+  @return clamp(
+    #{$min-rem}rem,
+    calc(
+      #{$min-rem}rem + #{$size-delta} *
+        ((100vw - #{$min-vw}px) / #{$vw-delta})
+    ),
+    #{$max-rem}rem
+  );
+}

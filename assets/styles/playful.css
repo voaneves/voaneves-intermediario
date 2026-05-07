@@ -1906,6 +1906,41 @@ body.light-mode .v4-hero-orb{
 .v4-hero-photo.is-revealed .v4-v4-hero-decor-chip[data-pos="bl"]{ transition-delay: .35s; }
 .v4-hero-photo.is-revealed .v4-v4-hero-decor-chip[data-pos="br"]{ transition-delay: .45s; }
 
+/* ── Name marquee inside the photo ──────────────────────────
+   Was hidden behind the photo card. Now sits IN FRONT of it,
+   matched exactly to the .v4-hero-stage-inner bounds, with the
+   same border-radius so it doesn't leak past the rounded corners.
+
+   Specificity note: the inline <style> in index.html has a rule
+   at (0,3,0): `.header-content .middle .name-marquee{...}` that
+   sets top:50%, transform, width:100%. To override cleanly I use
+   `.v4-hero-photo.middle .name-marquee` which is also (0,3,0) —
+   same specificity, but playful.css loads AFTER the inline style,
+   so source-order wins. Properties from the inline rule that
+   conflict with `inset:0` (top, transform, width) are explicitly
+   reset below. */
+.v4-hero-photo.middle .name-marquee{
+  position: absolute;
+  inset: 0;                /* match .v4-hero-stage-inner bounds */
+  top: 0;                  /* override inline top:50% */
+  width: auto;             /* override inline width:100% */
+  transform: none;         /* override inline translateY(-50%) */
+  z-index: 3;              /* above .v4-hero-stage-inner (z:2),
+                              below the role chips (z:5) */
+  pointer-events: none;    /* don't intercept cursor / brush events */
+  overflow: hidden;        /* clip the scrolling text to the box */
+  border-radius: 28px;     /* match the photo card's rounded corners */
+  display: flex;
+  align-items: center;     /* center the marquee row vertically */
+}
+
+/* Difference blend: white text inverts against the photo behind
+   it, adapting frame by frame to whatever's underneath. Same trick
+   the cursor (.pf-cur) and badge (.v4-hero-badge) use. */
+.name-marquee .marquee__wrapper_content{
+  mix-blend-mode: difference;
+}
+
 /* ── Bottom bar ──────────────────────────────────────────── */
 .v4-hero-bottom{
   display: grid;
@@ -2077,16 +2112,84 @@ body.light-mode .v4-badge-text{ fill: var(--ink); }
   }
 }
 
-/* ── Responsive ──────────────────────────────────────────── */
+/* ── Responsive ──────────────────────────────────────────────
+   Single mobile/tablet breakpoint at 900px (matches lg in the
+   SCSS breakpoint map). Below that everything stacks; below xs
+   (480px) we tighten further for small phones.                 */
 @media (max-width: 900px){
-  .v4-hero-grid{ grid-template-columns: 1fr; gap: 32px; }
-  .v4-hero-photo{ height: 52vh; order: -1; }
-  .v4-hero-name{ font-size: clamp(4rem, 22vw, 8rem); }
-  .v4-hero-bottom{ grid-template-columns: 1fr; }
+  /* SECTION-LEVEL: kill horizontal scroll caused by aurora/orb
+     bleeding past the photo box. We can't put overflow-x:hidden
+     on .v4-hero-photo (it would clip the chips & glow on desktop),
+     so we apply it on the section only at this breakpoint. */
+  .v4-hero{ overflow-x: hidden; }
+
+  /* 1) Layout — single column, photo on top, tighter spacing.
+        Photo height capped via clamp() so it never pushes the
+        title below the fold AND doesn't crash into the nav. */
+  .v4-hero-grid{
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding-bottom: 20px;
+  }
+  .v4-hero-photo{
+    height: clamp(280px, 48vh, 460px);
+    order: -1;
+  }
+
+  /* 2a) Hero title — fits 320px → 900px without horizontal scroll. */
+  .v4-hero-name{
+    font-size: clamp(3.5rem, 18vw, 7rem);
+    line-height: .9;
+    letter-spacing: -.025em;
+  }
+  .v4-v4-hero-line--right{ padding-right: 0; }
+
+  /* 2b) Marquee text inside the photo. The compiled rule on
+        .marquee__wrapper_content span uses max(5rem, 10vw),
+        floor 80px — way too big on a 320px phone. Override with
+        higher specificity (.v4-hero-photo .name-marquee ...) so
+        it only retunes the hero marquee, leaving expertise and
+        footer marquees alone. */
+  .v4-hero-photo .name-marquee .marquee__wrapper_content span{
+    font-size: clamp(2.25rem, 9vw, 5rem);
+    line-height: 1.1;
+  }
+
+  /* Meta block — tighter, no max-width cap so it flows full bleed */
+  .v4-hero-meta{ margin-top: 16px; gap: 14px; max-width: none; }
+  .v4-hero-meta p{ font-size: clamp(.9rem, 2.4vw, 1.05rem); }
+
+  /* 3) Role chips hidden — they cover the photo on narrow
+        viewports, and the magnet effect doesn't fire on touch
+        anyway, so they're pure visual noise. */
+  .v4-hero-decor{ display: none !important; }
+
+  /* Circular badge hidden (no cursor follow on touch, no value) */
   .v4-hero-badge{ display: none !important; }
+
+  /* Hero bottom — stack tags above scroll cue, allow wrap */
+  .v4-hero-bottom{
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 16px 0 24px;
+  }
+  .v4-hero-tags{ flex-wrap: wrap; gap: 6px; }
+  .v4-hero-tags span{ font-size: .65rem; padding: 7px 12px; }
 }
-@media (max-width: 600px){
-  .v4-hero-badge{ display: none !important; }
+
+/* Extra-small phones (≤480px, matches xs in the SCSS map).
+   Title gets even tighter, photo a bit shorter so the meta
+   block + tags stay visible without scroll on a 320×640 device. */
+@media (max-width: 480px){
+  .v4-hero-photo{ height: clamp(240px, 40vh, 360px); }
+  .v4-hero-name{
+    font-size: clamp(3rem, 16vw, 5rem);
+    letter-spacing: -.03em;
+  }
+  .v4-hero-photo .name-marquee .marquee__wrapper_content span{
+    font-size: clamp(1.875rem, 8.5vw, 3rem);
+  }
+  .v4-hero-tags span{ font-size: .6rem; padding: 6px 10px; }
 }
 
 /* ── Accessibility / motion ──────────────────────────────── */

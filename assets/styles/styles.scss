@@ -1,6 +1,6 @@
 /* Imports */
+@import "include";  /* mixins + functions FIRST so other partials can use them */
 @import "header";
-@import "include";
 @import "sidebar";
 @import "cursor";
 @import "independent-components";
@@ -984,8 +984,46 @@ footer {
   transform: translateX(0);
 }
 
-/* Media queries */
-@media screen and (max-width: 600px) {
+/* Media queries — uses respond-to() mixin from _include.scss.
+   Available breakpoints: xs(480) sm(600) md(768) lg(900) xl(1200) xxl(1600).
+   Add more @include respond-to(...) blocks as needed. */
+
+/* Hero responsive — kicks in once the photo becomes single-column
+   in the unified 900px breakpoint (see playful.css). At that point
+   the .v4-aurora blobs (inset: -15%) and .v4-hero-orb (inset: -28% -25%)
+   bleed past the photo's box. On a phone the photo IS the viewport
+   width, so that bleed becomes horizontal scroll on the body unless
+   we clip somewhere. We clip at <body> — least invasive — which
+   keeps the visual bleed inside the section but kills the scrollbar. */
+@include respond-to("lg") {
+  body { overflow-x: hidden; }
+
+  /* Legacy .header-content survives on the same <section> (it has
+     both classes). Most of its absolute decor children no longer
+     exist in the markup, but the .middle .image fallback is harmless
+     and we tighten what's left. */
+  .header-content {
+    height: auto;                        /* let v4-hero-grid drive height */
+    min-height: 100vh;
+    .middle .image img {
+      width: 100%;
+      max-width: 320px;
+      height: auto;
+    }
+  }
+}
+
+/* Tighten further on tablets (md = 768) — title shrinks more, photo
+   gets a bit shorter so the meta block stays above the fold. */
+@include respond-to("md") {
+  .header-content {
+    /* Keep the legacy column from forcing a fixed 100vh that would
+       trap content. v4-hero-grid handles the layout below. */
+    height: auto;
+  }
+}
+
+@include respond-to("sm") {
   .header-content {
     .header-btns {
       #meeting,

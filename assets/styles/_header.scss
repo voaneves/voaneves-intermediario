@@ -16,12 +16,18 @@
   --font-heavy: 800;
   --size-button: clamp(0.8vh, 5vw, 3vh);
   --size-game-grid: clamp(2em, 10vw, 5em);
-  --text-50: 50px;
-  --text-micro: min(5vw, 0.8em);
-  --text-small: clamp(1em, 5vw, 1.2em);
-  --text-medium: clamp(1.3em, 5vw, 2em);
-  --text-big: clamp(1.5em, 5vw, 3em);
-  --text-huge: clamp(2em, 5vw, 4em);
+
+  /* Typography scale — properly fluid clamps via the fluid() helper.
+     Each value interpolates linearly from $min-px @ 320px viewport
+     to $max-px @ 1200px viewport, then clamps at the extremes.
+     Replaces the old `clamp(1em, 5vw, 1.2em)` style which jumped
+     to the cap as soon as the viewport hit ~384px. */
+  --text-50:     50px;                     /* fixed: icon size, not body type */
+  --text-micro:  #{fluid(11, 13)};         /* captions, fine print */
+  --text-small:  #{fluid(16, 19)};         /* body text */
+  --text-medium: #{fluid(21, 32)};         /* subheadings */
+  --text-big:    #{fluid(24, 48)};         /* headings */
+  --text-huge:   #{fluid(32, 64)};         /* display / hero */
 }
 
 @media (prefers-color-scheme: dark) {
