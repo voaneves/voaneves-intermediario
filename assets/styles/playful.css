@@ -627,10 +627,82 @@ body.v4{ cursor: none; }
 }
 .v4-project picture{ display: none !important; }
 
-@media (max-width: 700px){
-.v4-project{ grid-template-columns: auto 1fr !important; gap: 16px; }
-  .v4-project-meta{ grid-column: 2; text-align: left; opacity: .5; font-size: .7rem; }
+/* ── Portfolio — tablet portrait & phones (≤768px = md) ──────
+   Stacks each project as a single vertical column: num → name → meta.
+   Touch-friendly hit-area (min-height ≥ 64px, generous padding).
+   Defensively kills `position: sticky` left over from the legacy
+   .portfolio-card class that shares this <li> (already overridden
+   by !important on desktop, repeated here as a safety net for any
+   future media-query weirdness). */
+@media (max-width: 768px){
+  .v4-portfolio{
+    padding: var(--pad-y) clamp(16px, 5vw, 32px) calc(var(--pad-y) + 1rem);
+  }
+  .v4-portfolio-head{
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 24px 0 32px;
+  }
+  .v4-portfolio-sub{
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .v4-project{
+    /* Single vertical column — items stack: number, name, meta */
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+    padding: 22px 4px !important;
+    align-items: start;
+    /* Comfortable touch target (Apple HIG: ≥44pt; Material: ≥48dp) */
+    min-height: 72px;
+    /* Belt-and-suspenders sticky neutralization */
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+    max-height: none !important;
+  }
+  /* Hover indent isn't useful on touch — the ::after arrow is also
+     hidden below — but we keep a tap-feedback via :active for tactility */
+  .v4-project:hover{ padding-left: 4px !important; color: inherit; }
+  .v4-project:active{ background: rgba(0,0,0,.04); }
   .v4-project::after{ display: none; }
+
+  /* Reset meta from the previous 700px override, restore single-col flow */
+  .v4-project-num{
+    font-size: .7rem;
+    letter-spacing: .15em;
+  }
+  .v4-project-name{
+    font-size: clamp(2rem, 8.5vw, 3.5rem);
+    line-height: 1;
+  }
+  .v4-project-meta{
+    grid-column: auto;
+    text-align: left;
+    font-size: .65rem;
+    opacity: .55;
+  }
+}
+
+/* ── Portfolio — small phones (≤480px = xs) ──────────────────
+   Tighter padding to maximize horizontal real estate, slightly
+   shorter project name so 4–5 letter words don't wrap awkwardly. */
+@media (max-width: 480px){
+  .v4-portfolio{
+    padding: 48px 16px 56px;
+  }
+  .v4-project{
+    padding: 18px 2px !important;
+    gap: 4px !important;
+  }
+  .v4-project-name{
+    font-size: clamp(1.75rem, 9vw, 2.75rem);
+  }
+  .v4-project-meta{
+    font-size: .6rem;
+    letter-spacing: .15em;
+  }
 }
 
 /* =============================================================
@@ -1106,16 +1178,71 @@ body.v4{ cursor: none; }
 @media (hover: none){
 .v4-timeline-hint{ display: none; }
 }
-@media (max-width: 700px){
-.v4-tcard{
-    flex: 0 0 78vw !important;
+
+/* ── Timeline — tablet portrait & phones (≤768px = md) ───────
+   Promotes scroll-snap from `proximity` (desktop, loose) to
+   `mandatory` (touch — every swipe lands cleanly on the next
+   card edge). 85vw card width lets a sliver of the next card
+   peek out, signaling "more to the right" — standard mobile
+   carousel pattern. */
+@media (max-width: 768px){
+  .v4-track{
+    padding: 0 16px 24px !important;
+    gap: 12px !important;
+
+    /* Strict snap — every swipe locks to a card edge */
+    scroll-snap-type: x mandatory !important;
+    /* Account for the track's left padding so the first card's
+       snap point lines up with its visible left edge instead of
+       behind the padding */
+    scroll-padding-left: 16px;
+    scroll-padding-inline-start: 16px;
+
+    /* Prevent horizontal scroll from chaining to the page on iOS
+       (otherwise a fast swipe can scroll the body sideways too) */
+    overscroll-behavior-x: contain;
+    /* Legacy momentum scroll for iOS < 13 — modern Safari handles
+       this natively, harmless to keep for older hardware */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .v4-tcard{
+    /* 85vw shows current card + ~15vw peek of next card.
+       Wider than 78vw to feel less cramped, narrower than 90vw
+       so the "there's more →" affordance is clear. */
+    flex: 0 0 85vw !important;
     height: 380px;
     border-radius: 20px !important;
+
+    /* Each card is a snap target. `start` aligns its left edge to
+       the track's scroll-padding-left (= 16px from viewport left). */
+    scroll-snap-align: start;
+    /* Force one-card-at-a-time swipes — the browser won't skip
+       past snap points even on a flick. Cleaner mobile UX. */
+    scroll-snap-stop: always;
   }
-  .v4-track{ padding: 0 16px 24px !important; gap: 12px !important; }
+
   .v4-tcard-role{ font-size: 1.25rem !important; }
   .v4-timeline-head{ grid-template-columns: 1fr !important; align-items: start !important; }
   .v4-timeline-cta{ flex-direction: row; }
+}
+
+/* ── Timeline — small phones (≤480px = xs) ───────────────────
+   Tighter padding to maximize card width on cramped screens.
+   Card height comes down a bit so it doesn't dominate the fold. */
+@media (max-width: 480px){
+  .v4-track{
+    padding: 0 12px 20px !important;
+    scroll-padding-left: 12px;
+    scroll-padding-inline-start: 12px;
+    gap: 10px !important;
+  }
+  .v4-tcard{
+    flex: 0 0 88vw !important;
+    height: 340px;
+    border-radius: 18px !important;
+  }
+  .v4-tcard-role{ font-size: 1.1rem !important; }
 }
 
 .v4.dark-mode .v4-tcard{ background: #0e0e0e; }
@@ -1552,7 +1679,10 @@ body.dark-mode .v4-drawer-panel{
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(32px, 4vw, 80px);
-  align-items: end;
+  /* Was `end` — items glued to the bottom of the (stretched) row track,
+     which created a big gap above on tall viewports. Centered now so
+     name + photo sit balanced vertically inside the section. */
+  align-items: center;
   flex: 1;
   padding-bottom: clamp(32px, 4vh, 60px);
 }
@@ -2117,11 +2247,22 @@ body.light-mode .v4-badge-text{ fill: var(--ink); }
    SCSS breakpoint map). Below that everything stacks; below xs
    (480px) we tighten further for small phones.                 */
 @media (max-width: 900px){
-  /* SECTION-LEVEL: kill horizontal scroll caused by aurora/orb
-     bleeding past the photo box. We can't put overflow-x:hidden
-     on .v4-hero-photo (it would clip the chips & glow on desktop),
-     so we apply it on the section only at this breakpoint. */
-  .v4-hero{ overflow-x: hidden; }
+  /* SECTION-LEVEL fixes for mobile/tablet:
+     1) Kill horizontal scroll caused by aurora/orb bleeding past
+        the photo box. We can't put overflow-x:hidden on
+        .v4-hero-photo (it would clip chips & glow on desktop),
+        so we apply it on the section only at this breakpoint.
+     2) Clear the fixed top nav. The nav is ~75-80px tall; the
+        section's padding-top uses --pad-y = clamp(60px, 10vh, 140px),
+        which on viewports shorter than ~800px tall (landscape
+        phones, smaller laptops) drops below nav height and the
+        photo gets eaten by the navbar. max() floors at 96px while
+        keeping --pad-y when the viewport is tall enough. */
+  .v4-hero{
+    overflow-x: hidden;
+    padding-top: max(96px, var(--pad-y));
+    scroll-margin-top: 96px; /* same offset for #home anchor jumps */
+  }
 
   /* 1) Layout — single column, photo on top, tighter spacing.
         Photo height capped via clamp() so it never pushes the

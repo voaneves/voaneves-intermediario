@@ -1021,6 +1021,72 @@ footer {
        trap content. v4-hero-grid handles the layout below. */
     height: auto;
   }
+
+  /* ── Services / Bento — tablet & phones (≤768px) ──────────────
+     Goal: cards take FULL width, no leftover lateral whitespace.
+     Specificity boost via `.v4-services .v4-bento ...` beats the
+     `.v4-bento ...` rules in playful.css (which uses !important +
+     single-class) without needing our own !important.
+
+     Two things matter on small screens:
+       1) Section's horizontal padding (--pad-x = up to 64px) eats
+          width. Override to a phone-friendly clamp.
+       2) Bento items default to 2-per-row at 600-1100px. Force
+          single-column at md so reading flow is one item at a
+          time — better for touch + skim reading. */
+  .v4-services {
+    /* Slimmer side gutters than the global --pad-x */
+    padding: var(--pad-y) clamp(16px, 4vw, 28px);
+
+    .v4-bento {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+    }
+
+    .v4-bento ul {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    /* Single column for both regular and `data-size="lg"` items */
+    .v4-bento-item,
+    .v4-bento-item[data-size="lg"] {
+      grid-column: span 1;
+      width: 100%;
+      max-width: none;
+      /* Tighter inner padding — 22/20 instead of the 28 from desktop */
+      padding: 22px 20px;
+      /* Lower min-height so cards size to content on phones; the
+         desktop 280px floor created big empty rectangles in mobile */
+      min-height: auto;
+    }
+  }
+
+  /* Legacy `.services-accordion` class shares the same element as
+     `.v4-bento`. Its old rules (max-width: 700px; width: 80%) are
+     already overridden by playful.css, but we re-assert here so any
+     future cascade change can't bring them back at this breakpoint. */
+  .services-content .services-accordion {
+    width: 100%;
+    max-width: none;
+    margin: 0 0 4rem; /* trim the desktop 40rem bottom margin */
+  }
+}
+
+/* ── Services — small phones (≤480px = xs) ────────────────────
+   Even slimmer to maximize legibility on the smallest viewports. */
+@include respond-to("xs") {
+  .v4-services {
+    padding: 56px 14px;
+
+    .v4-bento ul { gap: 10px; }
+
+    .v4-bento-item,
+    .v4-bento-item[data-size="lg"] {
+      padding: 18px 16px;
+    }
+  }
 }
 
 @include respond-to("sm") {
