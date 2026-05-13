@@ -1,5 +1,14 @@
 /* Imports */
 @import "include";  /* mixins + functions FIRST so other partials can use them */
+
+/* Fundação — Fase 1 da migração para a arquitetura unificada.
+   Tokens e tema vêm logo após os mixins, antes de qualquer partial que
+   possa consumir as custom properties (--ink, --cream, --signal, etc.).
+   Durante esta fase a definição também existe em playful.css; ambas
+   resolvem para os mesmos valores, então o output visual é idêntico. */
+@import "tokens";   /* Design tokens (cores, type, spacing) */
+@import "theme";    /* Light / dark / system theme rules    */
+
 @import "header";
 @import "sidebar";
 @import "cursor";
@@ -990,7 +999,7 @@ footer {
 
 /* Hero responsive — kicks in once the photo becomes single-column
    in the unified 900px breakpoint (see playful.css). At that point
-   the .v4-aurora blobs (inset: -15%) and .v4-hero-orb (inset: -28% -25%)
+   the .hero__aurora blobs (inset: -15%) and .hero__orb (inset: -28% -25%)
    bleed past the photo's box. On a phone the photo IS the viewport
    width, so that bleed becomes horizontal scroll on the body unless
    we clip somewhere. We clip at <body> — least invasive — which
@@ -1003,7 +1012,7 @@ footer {
      exist in the markup, but the .middle .image fallback is harmless
      and we tighten what's left. */
   .header-content {
-    height: auto;                        /* let v4-hero-grid drive height */
+    height: auto;                        /* let hero__grid drive height */
     min-height: 100vh;
     .middle .image img {
       width: 100%;
@@ -1018,14 +1027,14 @@ footer {
 @include respond-to("md") {
   .header-content {
     /* Keep the legacy column from forcing a fixed 100vh that would
-       trap content. v4-hero-grid handles the layout below. */
+       trap content. hero__grid handles the layout below. */
     height: auto;
   }
 
   /* ── Services / Bento — tablet & phones (≤768px) ──────────────
      Goal: cards take FULL width, no leftover lateral whitespace.
-     Specificity boost via `.v4-services .v4-bento ...` beats the
-     `.v4-bento ...` rules in playful.css (which uses !important +
+     Specificity boost via `.services .bento ...` beats the
+     `.bento ...` rules in playful.css (which uses !important +
      single-class) without needing our own !important.
 
      Two things matter on small screens:
@@ -1034,24 +1043,24 @@ footer {
        2) Bento items default to 2-per-row at 600-1100px. Force
           single-column at md so reading flow is one item at a
           time — better for touch + skim reading. */
-  .v4-services {
+  .services {
     /* Slimmer side gutters than the global --pad-x */
     padding: var(--pad-y) clamp(16px, 4vw, 28px);
 
-    .v4-bento {
+    .bento {
       width: 100%;
       max-width: none;
       margin: 0;
     }
 
-    .v4-bento ul {
+    .bento ul {
       grid-template-columns: 1fr;
       gap: 12px;
     }
 
     /* Single column for both regular and `data-size="lg"` items */
-    .v4-bento-item,
-    .v4-bento-item[data-size="lg"] {
+    .bento__item,
+    .bento__item[data-size="lg"] {
       grid-column: span 1;
       width: 100%;
       max-width: none;
@@ -1064,7 +1073,7 @@ footer {
   }
 
   /* Legacy `.services-accordion` class shares the same element as
-     `.v4-bento`. Its old rules (max-width: 700px; width: 80%) are
+     `.bento`. Its old rules (max-width: 700px; width: 80%) are
      already overridden by playful.css, but we re-assert here so any
      future cascade change can't bring them back at this breakpoint. */
   .services-content .services-accordion {
@@ -1077,13 +1086,13 @@ footer {
 /* ── Services — small phones (≤480px = xs) ────────────────────
    Even slimmer to maximize legibility on the smallest viewports. */
 @include respond-to("xs") {
-  .v4-services {
+  .services {
     padding: 56px 14px;
 
-    .v4-bento ul { gap: 10px; }
+    .bento ul { gap: 10px; }
 
-    .v4-bento-item,
-    .v4-bento-item[data-size="lg"] {
+    .bento__item,
+    .bento__item[data-size="lg"] {
       padding: 18px 16px;
     }
   }
@@ -1134,3 +1143,41 @@ footer {
     }
   }
 }
+
+/* =============================================================================
+ * Fase 2 da migração — parciais extraídos de playful.css.
+ *
+ * Tudo abaixo era um arquivo CSS separado (playful.css ~93KB) que loadava
+ * depois de styles.css. Ao trazer para dentro do pipeline SCSS preservamos
+ * a ordem de cascade: estes @imports vêm ao final do arquivo, depois dos
+ * blocos legados (.header-content, .who-content, etc.) e das suas media
+ * queries, replicando exatamente a precedência original.
+ *
+ * Ordem dentro deste bloco:
+ *   1. Resets v4 + componentes compartilhados (ripple)
+ *   2. Layout (nav, drawer)
+ *   3. Seções na ordem visual da página (hero → footer)
+ *   4. Legacy/transitional (visual easter eggs, patches)
+ *   5. Theme overrides — section conversions + per-mode tweaks, LAST por
+ *      ser o que vence o cascade nos rule sets dependentes de tema.
+ *
+ * As classes ainda usam o prefixo v4-. Fase 3 fará o rename para BEM.
+ * ============================================================================ */
+@import "reset";
+@import "ripple";
+
+@import "nav";
+@import "drawer";
+
+@import "hero";
+@import "intro";
+@import "stats";
+@import "expertise";
+@import "timeline";
+@import "portfolio";
+@import "services";
+@import "contact";
+@import "footer";
+
+@import "legacy";
+@import "theme-overrides";

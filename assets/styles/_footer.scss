@@ -1,0 +1,53 @@
+// =============================================================================
+// Footer — copyright row + giant outline marquee with multilingual greetings.
+// =============================================================================
+
+/* =============================================================
+ * 11.  FOOTER
+ * ============================================================= */
+.footer{
+  background: var(--ink);
+  color: rgba(255,255,255,.65);
+  padding: 32px var(--pad-x) 0;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+.footer__row{
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line-on-dark);
+}
+.footer__mark{ color: #fff; font-weight: 700; }
+.footer__mark sup{ color: var(--signal); }
+.footer__meta{ justify-self: center; }
+.footer__link{ color: rgba(255,255,255,.85); }
+.footer__link:hover{ color: #fff; }
+.footer__marquee{ overflow: hidden; }
+.footer__marquee .marquee{ height: 6rem; }
+.footer__marquee .marquee__wrapper_content{
+  font-family: var(--font-display) !important;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 5rem !important;
+  line-height: 1;
+  color: var(--ink);
+  -webkit-text-stroke: 1px rgba(255,255,255,.15);
+}
+.footer__marquee .marquee__wrapper_content span{
+  font-family: inherit !important;
+  font-size: inherit !important;
+  color: transparent !important;
+}
+.footer__marquee .marquee__wrapper_content span:after{
+  content: "·"; padding: 0 .5em; color: rgba(255,255,255,.4); -webkit-text-stroke: 0;
+}
+@media (max-width: 700px){
+.footer__row{ grid-template-columns: 1fr; gap: 6px; text-align: left; }
+  .footer__meta{ justify-self: start; }
+}
+

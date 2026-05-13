@@ -51,3 +51,82 @@
   background-color: white !important;
   mix-blend-mode: difference;
 }
+
+// =============================================================================
+
+// =============================================================================
+// Extracted from playful.css during Fase 2 (no class renames, only code motion).
+// =============================================================================
+.pf-cur, .pf-ring{
+  position: fixed; top: 0; left: 0;
+  pointer-events: none; z-index: 9999;
+  border-radius: 50%; will-change: transform;
+  mix-blend-mode: difference;
+}
+.pf-cur{ width: 8px; height: 8px; background: #fff; margin: -4px 0 0 -4px; }
+.pf-ring{ width: 38px; height: 38px; margin: -19px 0 0 -19px; border: 1.5px solid #fff; opacity: .55; }
+.pf-cur, .pf-ring{ transition: width .25s cubic-bezier(.22,.61,.36,1), height .25s cubic-bezier(.22,.61,.36,1), opacity .25s ease; }
+.pf-cur.is-hover{ width: 14px; height: 14px; margin: -7px 0 0 -7px; }
+.pf-ring.is-hover{ width: 70px; height: 70px; margin: -35px 0 0 -35px; opacity: .9; }
+.pf-cur.is-press{ transform: scale(.6); }
+.pf-ring.is-press{ transform: scale(.85); }
+
+.pf-label{
+  position: fixed; top: 0; left: 0;
+  pointer-events: none; z-index: 9998;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--signal);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: .72rem; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase;
+  white-space: nowrap;
+  transform: translate3d(0,0,0) scale(.6);
+  opacity: 0;
+  transition: opacity .25s ease, transform .35s cubic-bezier(.22,.61,.36,1);
+  will-change: transform, opacity;
+}
+.pf-label.is-on{ opacity: 1; transform: translate3d(0,0,0) scale(1); }
+
+.pf-img-preview{
+  position: fixed; top: 0; left: 0;
+  pointer-events: none; z-index: 9997;
+  width: 320px; height: 220px;
+  border-radius: 14px; overflow: hidden;
+  transform: translate3d(0,0,0) scale(.7);
+  opacity: 0;
+  transition: opacity .25s ease, transform .35s cubic-bezier(.22,.61,.36,1);
+  box-shadow: 0 30px 60px -10px rgba(0,0,0,.4);
+  background: var(--ink);
+}
+.pf-img-preview.is-on{ opacity: 1; transform: translate3d(0,0,0) scale(1); }
+.pf-img-preview img{ width: 100%; height: 100%; object-fit: cover; }
+
+.pf-cur.is-on-photo{
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  opacity: 0 !important;
+}
+.pf-ring.is-on-photo{
+  width: 170px !important;
+  height: 170px !important;
+  margin: -85px 0 0 -85px !important;
+  border-color: rgba(255,255,255,.85) !important;
+  background: rgba(255,255,255,.04);
+  opacity: 1 !important;
+  
+  -webkit-backdrop-filter: invert(1) hue-rotate(180deg) contrast(1.1);
+          backdrop-filter: invert(1) hue-rotate(180deg) contrast(1.1);
+  
+  mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce){
+.pf-ring.is-on-photo{
+    -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+  }
+}
+

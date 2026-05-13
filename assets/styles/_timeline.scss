@@ -1,0 +1,200 @@
+// =============================================================================
+// Timeline section — horizontal drag-scroll cards + responsive.
+// =============================================================================
+
+/* =============================================================
+ * 7.  TIMELINE — horizontal drag-scroll, no spacer
+ * ============================================================= */
+.timeline{
+  background: var(--ink);
+  color: #fff;
+  padding: var(--pad-y) 0 calc(var(--pad-y) + 1rem);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.timeline .section-tag{ padding: 0 var(--pad-x); }
+.timeline__head{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 24px;
+  padding: 32px var(--pad-x) 60px;
+}
+.timeline__title{
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-style: normal;
+  font-size: clamp(3rem, 7vw, 6.5rem);
+  line-height: 1;
+  letter-spacing: -.03em;
+  margin: 0;
+}
+.timeline__title em{ font-style: italic; color: var(--signal); font-weight: 900; }
+.timeline__cta{ display: flex; align-items: center; gap: 16px; }
+.timeline__hint{
+  font-family: var(--font-mono);
+  font-size: .72rem; letter-spacing: .2em;
+  text-transform: uppercase;
+  opacity: .6;
+}
+.timeline .cta{ background: var(--cream); color: var(--ink); }
+.timeline .cta:hover{ background: var(--signal); color: #fff; }
+.timeline .timeline__wrapper{ padding-bottom: 0 !important; }
+.timeline .timeline__wrapper .container{ display: none !important; }
+.timeline .timeline__wrapper .grid{ display: none !important; }
+.timeline .timeline__wrapper > .timeline-text{ display: none !important; }
+.timeline .spacer{ display: none !important; }
+.timeline__wrapper{ padding-bottom: 0 !important; }
+.timeline__track{
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 18px !important;
+  padding: 0 var(--pad-x) 24px !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
+  margin: 0 !important;
+  max-width: none !important;
+  align-items: stretch !important;
+  scroll-behavior: smooth;
+}
+.timeline__track.is-dragging{ cursor: grabbing; scroll-behavior: auto; }
+.timeline__track::-webkit-scrollbar{ display: none; }
+.timeline__card{
+  flex: 0 0 clamp(260px, 28vw, 360px) !important;
+  height: 440px;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  position: relative;
+  background: var(--ink-soft);
+  scroll-snap-align: start;
+
+  transition: transform .5s cubic-bezier(.22,.61,.36,1);
+  user-select: none;
+}
+.timeline__card:hover{ transform: translateY(-6px); }
+.timeline__card .card__image{
+  position: absolute !important; inset: 0 !important;
+  width: 100% !important; height: 100% !important;
+}
+.timeline__card .card__image img{
+  width: 100% !important; height: 100% !important;
+  object-fit: cover; object-position: center;
+  border-radius: 0 !important;
+  filter: brightness(.42) saturate(.5);
+  transition: transform .9s cubic-bezier(.22,.61,.36,1), filter .5s ease;
+  pointer-events: none;
+}
+.timeline__card:hover .card__image img{
+  transform: scale(1.06);
+  filter: brightness(.95) saturate(1.05) !important;
+}
+.timeline__card-meta{
+  position: absolute !important;
+  inset: auto 22px 22px 22px !important;
+  z-index: 2;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.timeline__card-year{
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.6);
+}
+.timeline__card-co{
+  font-family: var(--font-mono) !important;
+  font-size: .8rem !important;
+  letter-spacing: .2em;
+  color: rgba(255,255,255,.85) !important;
+  margin: 0 !important;
+}
+.timeline__card-role{
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  font-style: italic;
+  font-size: 1.5rem !important;
+  line-height: 1.1 !important;
+  color: #fff !important;
+  margin: 0 !important;
+  text-shadow: none !important;
+  letter-spacing: -.01em !important;
+}
+.timeline .timeline-tag{ display: none !important; }
+.timeline .timeline__wrapper .companies:hover > .card:not(:hover) .card__image{ filter: none !important; }
+
+/* ── Timeline — tablet portrait & phones (≤768px = md) ───────
+   Promotes scroll-snap from `proximity` (desktop, loose) to
+   `mandatory` (touch — every swipe lands cleanly on the next
+   card edge). 85vw card width lets a sliver of the next card
+   peek out, signaling "more to the right" — standard mobile
+   carousel pattern. */
+@media (max-width: 768px){
+  .timeline__track{
+    padding: 0 16px 24px !important;
+    gap: 12px !important;
+
+    /* Strict snap — every swipe locks to a card edge */
+    scroll-snap-type: x mandatory !important;
+    /* Account for the track's left padding so the first card's
+       snap point lines up with its visible left edge instead of
+       behind the padding */
+    scroll-padding-left: 16px;
+    scroll-padding-inline-start: 16px;
+
+    /* Prevent horizontal scroll from chaining to the page on iOS
+       (otherwise a fast swipe can scroll the body sideways too) */
+    overscroll-behavior-x: contain;
+    /* Legacy momentum scroll for iOS < 13 — modern Safari handles
+       this natively, harmless to keep for older hardware */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .timeline__card{
+    /* 85vw shows current card + ~15vw peek of next card.
+       Wider than 78vw to feel less cramped, narrower than 90vw
+       so the "there's more →" affordance is clear. */
+    flex: 0 0 85vw !important;
+    height: 380px;
+    border-radius: 20px !important;
+
+    /* Each card is a snap target. `start` aligns its left edge to
+       the track's scroll-padding-left (= 16px from viewport left). */
+    scroll-snap-align: start;
+    /* Force one-card-at-a-time swipes — the browser won't skip
+       past snap points even on a flick. Cleaner mobile UX. */
+    scroll-snap-stop: always;
+  }
+
+  .timeline__card-role{ font-size: 1.25rem !important; }
+  .timeline__head{ grid-template-columns: 1fr !important; align-items: start !important; }
+  .timeline__cta{ flex-direction: row; }
+}
+
+/* ── Timeline — small phones (≤480px = xs) ───────────────────
+   Tighter padding to maximize card width on cramped screens.
+   Card height comes down a bit so it doesn't dominate the fold. */
+@media (max-width: 480px){
+  .timeline__track{
+    padding: 0 12px 20px !important;
+    scroll-padding-left: 12px;
+    scroll-padding-inline-start: 12px;
+    gap: 10px !important;
+  }
+  .timeline__card{
+    flex: 0 0 88vw !important;
+    height: 340px;
+    border-radius: 18px !important;
+  }
+  .timeline__card-role{ font-size: 1.1rem !important; }
+}
+
+.v4.dark-mode .timeline__card{ background: #0e0e0e; }
+.v4.dark-mode .stat[data-hue="cream"]{ color: #1a1a1a; }
+.v4.dark-mode .portfolio__sub{ color: rgba(244,234,212,.6) !important; }
+.v4.dark-mode .bento__item{ background: #111; border-color: rgba(255,255,255,.05); }

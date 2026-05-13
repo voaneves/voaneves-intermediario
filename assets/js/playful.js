@@ -77,21 +77,21 @@
     });
 
     var hovers = document.querySelectorAll(
-      "a, button, [data-cursor], .control, .v4-cta, .v4-tcard, .v4-project, " +
-      ".v4-bento-item, .v4-utility, .v4-email-btn, " +
+      "a, button, [data-cursor], .control, .cta, .timeline__card, .project, " +
+      ".bento__item, .utility-btn, .contact__email-btn, " +
       ".portfolio-card, .companies .card, .icon"
     );
     hovers.forEach(function (h) {
       h.addEventListener("pointerenter", function () {
         dot.classList.add("is-hover"); ring.classList.add("is-hover");
         var txt = h.getAttribute("data-cursor-label") || "";
-        if (!txt && h.classList.contains("v4-tcard")) {
-          var c = h.querySelector(".v4-tcard-co");
-          var r = h.querySelector(".v4-tcard-role");
+        if (!txt && h.classList.contains("timeline__card")) {
+          var c = h.querySelector(".timeline__card-co");
+          var r = h.querySelector(".timeline__card-role");
           if (c && r) txt = (c.textContent + " — " + r.textContent).toUpperCase();
         }
-        if (!txt && h.classList.contains("v4-project")) {
-          var n = h.querySelector(".v4-project-name");
+        if (!txt && h.classList.contains("project")) {
+          var n = h.querySelector(".project__name");
           if (n) txt = n.textContent.toUpperCase();
         }
         if (txt && txt.length < 80) {
@@ -119,8 +119,8 @@
 
     // ---- Cursor lens over the hero photo: dot fades, ring grows ----
     // ---- Plus: rotating circular badge follows the cursor while over photo
-    var heroPhoto = document.querySelector(".v4-hero-photo");
-    var heroBadge = document.querySelector(".v4-hero-badge");
+    var heroPhoto = document.querySelector(".hero__photo");
+    var heroBadge = document.querySelector(".badge");
     if (heroPhoto) {
       heroPhoto.addEventListener("pointerenter", function () {
         dot.classList.add("is-on-photo");
@@ -176,7 +176,7 @@
   // ============================================================
   function initMagnetic() {
     if (prefersReduced || isTouch || !canHover) return;
-    var sel = [".v4-cta", ".v4-utility", ".v4-email-btn .glitch", ".icon"];
+    var sel = [".cta", ".utility-btn", ".contact__email-btn .glitch", ".icon"];
     var STR = 0.28, RANGE = 70;
     document.querySelectorAll(sel.join(",")).forEach(function (el) {
       var rect=null, raf=null;
@@ -210,7 +210,7 @@
   // ============================================================
   function initHeroReveal() {
     if (prefersReduced) return;
-    document.querySelectorAll(".v4-hero-line").forEach(function (line) {
+    document.querySelectorAll(".hero__line").forEach(function (line) {
       if (line.dataset.split) return;
       line.dataset.split = "1";
       var txt = line.getAttribute("data-text") || line.textContent;
@@ -237,7 +237,7 @@
   // 4. SECTION BG-MODE WATCHER (nav adapts)
   // ============================================================
   function initSectionMode() {
-    var nav = document.querySelector(".v4-nav");
+    var nav = document.querySelector(".nav");
     if (!nav) return;
     var sections = document.querySelectorAll("section[data-section-bg]");
     if (!sections.length) return;
@@ -265,7 +265,7 @@
   // ============================================================
   function initActiveNav() {
     if (!("IntersectionObserver" in window)) return;
-    var nav = document.querySelector(".v4-nav-links");
+    var nav = document.querySelector(".nav__links");
     if (!nav) return;
     var links = nav.querySelectorAll("a[href^='#']");
     var io = new IntersectionObserver(function (entries) {
@@ -320,7 +320,7 @@
   function initWordReveal() {
     if (prefersReduced || !("IntersectionObserver" in window)) return;
     var ps = document.querySelectorAll(
-      ".v4-intro-side > p, .v4-bento-item p, .v4-portfolio-sub"
+      ".intro__side > p, .bento__item p, .portfolio__sub"
     );
     if (!ps.length) return;
     ps.forEach(function (p) {
@@ -411,7 +411,7 @@
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(frame);
     }
-    var nodes = document.querySelectorAll(".v4-section-tag");
+    var nodes = document.querySelectorAll(".section-tag");
     if (!nodes.length || !("IntersectionObserver" in window)) return;
     nodes.forEach(function (n) { n.dataset.origText = n.textContent.trim(); });
     var io = new IntersectionObserver(function (entries) {
@@ -485,7 +485,7 @@
   function initRipple() {
     if (prefersReduced) return;
     var targets = document.querySelectorAll(
-      ".v4-cta, .icon, .v4-tcard, .v4-bento-item .call-to-action, .v4-email-btn"
+      ".cta, .icon, .timeline__card, .bento__item .call-to-action, .contact__email-btn"
     );
     targets.forEach(function (el) {
       if (!el.style.position) el.style.position = "relative";
@@ -538,8 +538,8 @@
         var t = document.querySelector(id);
         if (!t) return;
         e.preventDefault();
-        var navH = (document.querySelector(".v4-nav") || {}).getBoundingClientRect
-          ? document.querySelector(".v4-nav").getBoundingClientRect().height : 0;
+        var navH = (document.querySelector(".nav") || {}).getBoundingClientRect
+          ? document.querySelector(".nav").getBoundingClientRect().height : 0;
         var top = t.getBoundingClientRect().top + window.scrollY - navH - 8;
         window.scrollTo({
           top: top,
@@ -594,10 +594,10 @@
     // PavelDoGreat / 2014 GPU Gems chapter 38. Density is used as
     // an alpha mask: where fluid is, image B reveals over image A.
     // ============================================================
-    var photo = document.querySelector(".v4-hero-photo");
+    var photo = document.querySelector(".hero__photo");
     if (!photo) return;
-    var stage = photo.querySelector(".v4-hero-stage-inner");
-    var canvas = photo.querySelector(".v4-hero-wake-canvas");
+    var stage = photo.querySelector(".hero__stage");
+    var canvas = photo.querySelector(".hero__wake-canvas");
     if (!canvas) return;
 
     // --- Static fallback: just hover-crossfade A → B with a 2nd <img> ---
@@ -1103,11 +1103,11 @@
   //     body-lock, click-outside-to-close, theme proxy.
   // ============================================================
   function initMobileDrawer() {
-    var toggle = document.querySelector(".v4-nav-toggle");
-    var drawer = document.getElementById("v4-drawer");
+    var toggle = document.querySelector(".nav__toggle");
+    var drawer = document.getElementById("drawer");
     if (!toggle || !drawer) return;
 
-    var panel = drawer.querySelector(".v4-drawer-panel");
+    var panel = drawer.querySelector(".drawer__panel");
     var closers = drawer.querySelectorAll("[data-drawer-close]");
     var anchorLinks = drawer.querySelectorAll("a[href^='#']");
     var lastFocus = null;
@@ -1127,7 +1127,7 @@
       drawer.setAttribute("aria-hidden", "false");
       toggle.setAttribute("aria-expanded", "true");
       toggle.setAttribute("aria-label", "Fechar menu");
-      document.body.classList.add("v4-drawer-open");
+      document.body.classList.add("drawer-open");
       // Move focus into the drawer after the slide-in finishes
       setTimeout(function () {
         var first = focusables()[1] || focusables()[0]; // skip close-btn → land on first link
@@ -1141,7 +1141,7 @@
       drawer.setAttribute("aria-hidden", "true");
       toggle.setAttribute("aria-expanded", "false");
       toggle.setAttribute("aria-label", "Abrir menu");
-      document.body.classList.remove("v4-drawer-open");
+      document.body.classList.remove("drawer-open");
       if (lastFocus && typeof lastFocus.focus === "function") {
         lastFocus.focus();
       } else {
@@ -1235,15 +1235,15 @@
   //     canvas/svg elements no longer exist).
   // ============================================================
   function initHeroAurora() {
-    var photo = document.querySelector(".v4-hero-photo");
+    var photo = document.querySelector(".hero__photo");
     if (!photo) return;
-    var aurora = photo.querySelector(".v4-aurora");
-    // CSS classes use the doubled "v4-v4-" prefix (the build produced that
+    var aurora = photo.querySelector(".hero__aurora");
+    // CSS classes were renamed to BEM during Fase 3 of the unification (was "v4-v4-" prefix doubled
     // namespace). Fall back to the single-prefix selector so older markup
     // keeps working.
-    var cutout = photo.querySelector(".v4-v4-hero-photo-cutout, .v4-hero-photo-cutout");
-    var orb    = photo.querySelector(".v4-hero-orb");
-    var chips  = photo.querySelectorAll(".v4-v4-hero-decor-chip, .v4-hero-decor-chip");
+    var cutout = photo.querySelector(".hero__cutout, .hero__cutout");
+    var orb    = photo.querySelector(".hero__orb");
+    var chips  = photo.querySelectorAll(".hero__chip, .hero__chip");
 
     setTimeout(function () { photo.classList.add("is-revealed"); }, 220);
 
@@ -1416,7 +1416,7 @@
   //
   //     Architecture:
   //       • <img> always renders full color (CSS).
-  //       • <canvas.v4-hero-reveal> sits on top, painted ONCE on
+  //       • <canvas.hero__reveal> sits on top, painted ONCE on
   //         load/resize with a grayscale copy of the same image.
   //       • pointermove → destination-out brush stamps with a soft
   //         radial-gradient falloff erase circles in the canvas,
@@ -1433,17 +1433,17 @@
   //         eat fillrate on huge canvases.
   // ============================================================
   function initHeroBrushReveal() {
-    var photo  = document.querySelector(".v4-hero-photo");
+    var photo  = document.querySelector(".hero__photo");
     if (!photo) return;
-    var img    = photo.querySelector(".v4-hero-img");
-    var cutout = photo.querySelector(".v4-v4-hero-photo-cutout, .v4-hero-photo-cutout");
+    var img    = photo.querySelector(".hero__img");
+    var cutout = photo.querySelector(".hero__cutout, .hero__cutout");
     if (!img || !cutout) return;
     if (prefersReduced || isTouch || !canHover) return;
 
-    var canvas = cutout.querySelector(".v4-hero-reveal");
+    var canvas = cutout.querySelector(".hero__reveal");
     if (!canvas) {
       canvas = document.createElement("canvas");
-      canvas.className = "v4-hero-reveal";
+      canvas.className = "hero__reveal";
       canvas.setAttribute("aria-hidden", "true");
       cutout.insertBefore(canvas, img.nextSibling);
     }

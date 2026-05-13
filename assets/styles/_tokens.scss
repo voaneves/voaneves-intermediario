@@ -1,0 +1,59 @@
+// =============================================================================
+// Design tokens — single source of truth for colors, type, spacing, layout.
+//
+// This file is the first piece of the unified architecture (Fase 1 do plano).
+// It loads BEFORE every other partial that may consume these custom
+// properties. The legacy `--color-*` tokens still live in _header.scss for
+// now — they will be folded in during Fase 5 (limpeza do legado).
+//
+// playful.css continues to re-declare the same tokens at runtime; because it
+// is preloaded AFTER styles.css, its values override these. That is the
+// intended cascade during Fase 1 — visual output remains identical and the
+// new partial only serves as a documented inventory. Removing the duplicate
+// declaration in playful.css is the job of Fase 2.
+//
+// Layers (in declaration order):
+//   1. Typography family stack
+//   2. Core palette (semantic mapping happens in _theme.scss)
+//   3. Accent palette (decorative hues used by the hero, stats, etc.)
+//   4. Line / border tokens
+//   5. Layout spacing
+// =============================================================================
+
+:root {
+  /* -- Typography family stack ------------------------------------------- */
+  --font-display:   "Fraunces", ui-serif, "New York", "Big Caslon", Georgia, serif;
+  --font-condensed: "Helvetica Neue Condensed Black", "HelveticaNeue-CondensedBold",
+                    "Arial Narrow", Impact, sans-serif-condensed, sans-serif;
+  --font-mono:      ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+
+  /* -- Core palette ------------------------------------------------------ */
+  /* Consumed by every modern section. Theme layer (_theme.scss) swaps these
+     per system preference and explicit user toggle. Section-level palette
+     routing via [data-section-bg="..."] resolves through these tokens. */
+  --ink:        #0a0a0a;  /* primary text / dark surface              */
+  --ink-soft:   #1a1a1a;  /* raised dark surface                      */
+  --cream:      #f4ead4;  /* primary bg / light text on dark          */
+  --cream-soft: #efe4c5;  /* secondary bg                             */
+  --signal:     #f50000;  /* accent / CTA red                         */
+  --signal-2:   #ff2a2a;  /* hot accent (hover, indicators)           */
+
+  /* -- Accent palette ---------------------------------------------------- */
+  /* Decorative hues used by stats, hero aurora blobs, illustrative chips. */
+  --hue-orange: #ff6b35;
+  --hue-pink:   #ff5d9e;
+  --hue-blue:   #6ba9ff;
+  --hue-yellow: #f3c043;
+  --maroon:     #2a0e0e;
+
+  /* -- Lines / borders --------------------------------------------------- */
+  --line:         rgba(0, 0, 0, 0.12);   /* hairlines on light surfaces */
+  --line-on-dark: rgba(255, 255, 255, 0.14); /* hairlines on dark surfaces */
+
+  /* -- Layout spacing ---------------------------------------------------- */
+  /* Section padding — fluid horizontal gutters and vertical rhythm.
+     --pad-x grows from 20px (mobile) to 64px (desktop).
+     --pad-y grows from 60px to 140px. */
+  --pad-x: clamp(20px, 4vw, 64px);
+  --pad-y: clamp(60px, 10vh, 140px);
+}

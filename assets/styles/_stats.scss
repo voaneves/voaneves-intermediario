@@ -1,0 +1,76 @@
+// =============================================================================
+// Stats section — large numerals, colored hue accents.
+// =============================================================================
+
+/* =============================================================
+ * 5.  STATS — pinned, idyllic colored slabs
+ * ============================================================= */
+.stats{
+  background: var(--ink);
+  padding: var(--pad-y) var(--pad-x);
+  /* Immersive scroll: vertical center inside the 100vh floor.
+     !important overrides for legacy .work rules removed (don't match anymore). */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.stats .section-tag{ padding-left: 0; padding-right: 0; padding-top: 0; }
+.stats__grid{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-top: 60px;
+  max-width: 1500px;
+}
+.stat{
+  position: relative;
+  border-radius: 24px;
+  padding: 36px 28px;
+  min-height: 280px;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+
+  transition: transform .5s cubic-bezier(.22,.61,.36,1);
+}
+.stat[data-hue="cream"]{ background: var(--cream); color: var(--ink); transform: rotate(-2deg); }
+.stat[data-hue="orange"]{ background: var(--hue-orange); color: var(--maroon); transform: rotate(1.5deg) translateY(20px); }
+.stat[data-hue="pink"]{ background: var(--hue-pink); color: var(--maroon); transform: rotate(-1deg) translateY(-10px); }
+.stat[data-hue="blue"]{ background: var(--hue-blue); color: var(--maroon); transform: rotate(2deg); }
+.stat:hover{ transform: rotate(0deg) scale(1.04) translateY(-8px) !important; }
+
+.stat__num{
+  font-family: var(--font-condensed);
+  font-stretch: condensed;
+  font-weight: 900;
+  font-size: clamp(5rem, 10vw, 9rem);
+  line-height: .82;
+  letter-spacing: -.05em;
+  color: inherit;
+}
+.stat__suffix{
+  font-family: var(--font-mono);
+  font-size: .9rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  margin-top: -28px;
+  display: block;
+  opacity: .7;
+}
+.stat__label{
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  letter-spacing: .15em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  opacity: .8;
+  margin: 0;
+}
+
+@media (max-width: 900px){
+.stats__grid{ grid-template-columns: repeat(2,1fr); }
+}
+@media (max-width: 480px){
+.stats__grid{ grid-template-columns: 1fr; }
+  .stat{ transform: none !important; }
+}
+

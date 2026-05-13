@@ -1,0 +1,416 @@
+// =============================================================================
+// Theme overrides — section conversions, content hardening, hero/footer
+// per-mode tweaks. Loaded last so it wins the cascade.
+// =============================================================================
+
+/* =============================================================
+ * Theme system — three-tier resolution
+ *
+ *   1. `:root` (already defined at top of file) — DEFAULT TOKENS,
+ *      tuned for a light environment / no system preference.
+ *
+ *   2. `@media (prefers-color-scheme: dark)` — automatically swaps
+ *      tokens to dark variants when the user's OS is in dark mode.
+ *      No JS, no toggle needed.
+ *
+ *   3. `.v4.light-mode` / `.v4.dark-mode` — EXPLICIT user override
+ *      via the toggle button. Beats the system preference by
+ *      specificity (class on body element wins over :root in @media).
+ *
+ *   So a visitor on dark macOS gets dark theme automatically; if they
+ *   click the sun icon, the page forces light. Same for the reverse.
+ *
+ *   Implementation = CUSTOM-PROPERTY SWAP. One repaint per toggle,
+ *   no layout recalc, GPU-friendly. Scoped transitions further down
+ *   keep day-to-day interactions paint-storm-free.
+ * ============================================================= */
+
+
+/* ── System dark — automatic, respects OS preference ─────────
+   Token strategy mirrors .v4.dark-mode (full dark, pure black bg,
+   warm cream text, brighter signal red). Section re-routing inside
+   ensures cream sections become dark surfaces, preserving the
+   alternating editorial layout INSIDE the dark theme. */
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:         #000000;
+    --ink-soft:    #0e0e0e;
+    --cream:       #e8dec5;
+    --cream-soft:  #c8bda1;
+    --signal:      #ff3838;
+    --signal-2:    #ff5a5a;
+    --line:        rgba(255,255,255,.12);
+    --line-on-dark: rgba(255,255,255,.12);
+  }
+  /* Cream sections → dark surface. Keeps section alternation but
+     within the dark palette (subtle elevation: #0e0e0e vs #000). */
+  .v4 section[data-section-bg="cream"]{
+    background: var(--ink-soft);
+    color: var(--cream);
+  }
+  .v4 section[data-section-bg="cream"] .intro__statement,
+  .v4 section[data-section-bg="cream"] .portfolio__title,
+  .v4 section[data-section-bg="cream"] .services__title,
+  .v4 section[data-section-bg="cream"] .timeline__title{
+    color: var(--cream);
+  }
+  /* Surface adjustments for cards on dark system */
+  .v4 .timeline__card{ background: #0e0e0e; }
+  .v4 .bento__item{ background: #111; border-color: rgba(255,255,255,.06); }
+  /* Nav blends with new dark background */
+  .v4 .nav{
+    background: rgba(0,0,0,.78);
+    color: rgba(232,222,197,.92);
+    border-color: rgba(255,255,255,.08);
+  }
+}
+
+/* ── System light — explicit for symmetry (defaults already light)
+   This block is intentionally empty of overrides — :root already
+   carries the light defaults. Kept as a documentation anchor so
+   future light-specific refinements have an obvious home. */
+@media (prefers-color-scheme: light){
+  :root{
+    /* defaults already in :root at top of file */
+  }
+}
+
+
+/* ── USER OVERRIDE: explicit LIGHT mode ─────────────────────
+   When the user clicks the toggle to light, this beats whatever
+   the system preference set. Class on body has higher specificity
+   than :root in @media. No JS-driven media query swap needed.
+   Token strategy:
+     --cream      → primary surface (slightly warm offwhite #fcfcf8
+                    reads cleaner than pure #fff which feels harsh)
+     --cream-soft → secondary surface (cards, raised elements)
+     --ink        → primary text (pure black for max contrast)
+     --signal     → CTA red, darkened from #f50000 to #c41a1a so
+                    button text passes AA on red background
+   Contrast checks:
+     #0a0a0a on #fcfcf8 = 20.4:1   ✓ AAA  (body text)
+     #c41a1a on #fcfcf8 = 6.0:1    ✓ AA Large + UI components
+     rgba(0,0,0,.55) on #fcfcf8 = 7.6:1 ✓ AAA  (muted text)
+*/
+.v4.light-mode{
+  --cream:       #fcfcf8;
+  --cream-soft:  #f1ede2;
+  --ink:         #0a0a0a;
+  --ink-soft:    #1a1a1a;
+  --signal:      #c41a1a;
+  --signal-2:    #e62525;
+  --line:        rgba(0,0,0,.10);
+  --line-on-dark: rgba(0,0,0,.10);
+  /* Sync with legacy palette from styles.css. The legacy
+     --color-white is named confusingly — it's the TEXT color, not
+     a literal white. In light context = near-black; in dark = white.
+     Forcing it here makes legacy elements (marquees, body text in
+     styles.css) follow the explicit toggle, not the system. */
+  --color-white: #0a0a0a;
+  --color-primary: #fcfcf8;
+  --color-secondary: #c41a1a;
+}
+/* Convert ALL section backgrounds (except hero) to light surfaces.
+   The hero stays cinematic dark — it's the brand moment where the
+   photo brush-reveal needs a black canvas to read well. */
+.v4.light-mode section[data-section-bg="ink"]{
+  background: var(--cream-soft);
+  color: var(--ink);
+}
+.v4.light-mode section[data-section-bg="cream"]{
+  background: var(--cream);
+  color: var(--ink);
+}
+/* Inverted indicator color on what's now a light surface */
+.v4.light-mode .section-tag[data-on-dark]{ color: var(--ink); }
+.v4.light-mode .nav{
+  background: rgba(252,252,248,.88);
+  color: var(--ink);
+  border-color: rgba(0,0,0,.08);
+}
+.v4.light-mode .nav[data-mode="ink"],
+.v4.light-mode .nav[data-mode="cream"]{ color: var(--ink); }
+.v4.light-mode .cta{ background: var(--ink); color: var(--cream); }
+.v4.light-mode .cta:hover{ background: var(--signal); color: #fff; }
+.v4.light-mode .timeline__card{ background: var(--cream-soft); color: var(--ink); }
+.v4.light-mode .timeline__card-year{ color: rgba(0,0,0,.55); }
+.v4.light-mode .timeline__card-co{ color: rgba(0,0,0,.75) !important; }
+.v4.light-mode .timeline__card-role{ color: var(--ink) !important; }
+/* Default image dim was brightness(.42) — designed for dark cards with
+   light text overlay. In light mode that creates dark "islands" in
+   an otherwise bright page. Reduce dim so card image stays light,
+   text overlay reads as dark. Hover still brightens fully. */
+.v4.light-mode .timeline__card .card__image img{
+  filter: brightness(.82) saturate(.7) !important;
+}
+.v4.light-mode .timeline__card:hover .card__image img{
+  filter: brightness(1.05) saturate(1.1) !important;
+}
+.v4.light-mode .bento__item{
+  background: var(--cream-soft);
+  color: var(--ink);
+  border-color: rgba(0,0,0,.06);
+}
+.v4.light-mode .bento__item .title h2{ color: var(--ink) !important; }
+.v4.light-mode .bento__item p{ color: rgba(0,0,0,.70) !important; }
+.v4.light-mode .bento__item p em{ color: var(--ink); }
+.v4.light-mode .bento__item .title h2:after{ background: rgba(0,0,0,.08); }
+.v4.light-mode .stat{ color: var(--ink); }
+.v4.light-mode .portfolio__list{ border-top-color: var(--line); }
+.v4.light-mode .project{ border-bottom-color: var(--line); }
+.v4.light-mode .intro__meta > div{ border-color: var(--line); }
+/* Hero follows the theme like every other section now —
+   in light mode it becomes light (via the section[data-section-bg="ink"]
+   → cream-soft conversion above), with dark text from the
+   inverted-text rules below. */
+
+
+/* ── DARK MODE — everything dark, high contrast ─────────────
+   Token strategy:
+     --ink        → pure black (#000) for max contrast and OLED win
+     --ink-soft   → near-black surface for cards (subtle elevation)
+     --cream      → muted warm offwhite text (#e8dec5) — easier on
+                    eyes than #fff which can vibrate against pure black
+     --signal     → brighter red (#ff3838) — vibrant against deep dark
+   Contrast checks:
+     #e8dec5 on #000000 = 14.3:1 ✓ AAA  (body text)
+     #ff3838 on #000000 = 5.7:1  ✓ AA  (CTA red)
+     rgba(232,222,197,.6) on #000 = 8.6:1 ✓ AAA (muted text)
+*/
+.v4.dark-mode{
+  --cream:       #e8dec5;
+  --cream-soft:  #c8bda1;
+  --ink:         #000000;
+  --ink-soft:    #0e0e0e;
+  --signal:      #ff3838;
+  --signal-2:    #ff5a5a;
+  --line:        rgba(255,255,255,.12);
+  --line-on-dark: rgba(255,255,255,.12);
+  /* Sync legacy palette — see comment in .v4.light-mode above.
+     Without these, marquees and other styles.css-driven elements
+     keep their light-system color even when the user toggles dark. */
+  --color-white: #e8dec5;
+  --color-primary: #000000;
+  --color-secondary: #ff3838;
+
+  background: var(--ink) !important;
+  color: var(--cream) !important;
+}
+/* Convert ALL cream sections to dark surfaces */
+.v4.dark-mode section[data-section-bg="cream"]{
+  background: var(--ink-soft);
+  color: var(--cream);
+}
+.v4.dark-mode section[data-section-bg="ink"]{
+  background: var(--ink);
+  color: var(--cream);
+}
+/* Promote display type to full cream for visual hierarchy */
+.v4.dark-mode section[data-section-bg="cream"] .intro__statement,
+.v4.dark-mode section[data-section-bg="cream"] .portfolio__title,
+.v4.dark-mode section[data-section-bg="cream"] .services__title,
+.v4.dark-mode section[data-section-bg="cream"] .timeline__title{
+  color: var(--cream);
+}
+.v4.dark-mode .portfolio__list{ border-top-color: rgba(255,255,255,.10); }
+.v4.dark-mode .project{ border-bottom-color: rgba(255,255,255,.06); }
+.v4.dark-mode .project__num{ color: rgba(232,222,197,.45); }
+.v4.dark-mode .intro__meta > div{ border-color: rgba(255,255,255,.10); }
+.v4.dark-mode .intro__meta .k{ color: rgba(232,222,197,.55); }
+.v4.dark-mode .stat[data-hue="cream"]{ color: var(--ink); }
+.v4.dark-mode .nav{
+  background: rgba(0,0,0,.78);
+  color: rgba(232,222,197,.92);
+  border-color: rgba(255,255,255,.08);
+}
+
+
+/* ── Footer in LIGHT mode — must adapt or it stays a dark island ─
+   The base .footer uses `background: var(--ink)`. In light mode
+   --ink is still near-black (#0a0a0a), so the footer doesn't swap.
+   Force light surface + dark text here. The marquee inside uses
+   outline-style text with a light stroke (-webkit-text-stroke
+   white) that becomes invisible on a light bg — flip stroke to dark. */
+.v4.light-mode .footer{
+  background: var(--cream-soft) !important;
+  color: rgba(0,0,0,.65) !important;
+}
+.v4.light-mode .footer__mark{ color: var(--ink) !important; }
+.v4.light-mode .footer__link{ color: rgba(0,0,0,.85) !important; }
+.v4.light-mode .footer__link:hover{ color: var(--ink) !important; }
+.v4.light-mode .footer__row{ border-bottom-color: rgba(0,0,0,.10) !important; }
+.v4.light-mode .footer__marquee .marquee__wrapper_content{
+  color: var(--cream-soft) !important;
+  -webkit-text-stroke: 1px rgba(0,0,0,.18) !important;
+}
+.v4.light-mode .footer__marquee .marquee__wrapper_content span:after{
+  color: rgba(0,0,0,.4) !important;
+}
+
+/* Same treatment for dark-system auto (without class) */
+@media (prefers-color-scheme: dark){
+  .v4 .footer{ background: var(--ink); }
+}
+
+
+/* ── Section content hardening — handles BOTH .dark-mode class
+   AND prefers-color-scheme: dark for legacy hardcoded colors ─
+   These elements have hardcoded dark colors (#2a2a2a etc.) that
+   were tuned for default cream backgrounds. When the bg becomes
+   dark (either via class or system pref), the text stays dark on
+   dark = unreadable. Fix: override per dark-context.
+
+   The rules are listed under BOTH selectors (the class and the
+   @media) so they fire in either trigger. */
+.v4.dark-mode .intro__side > p,
+.v4.dark-mode .portfolio__sub,
+.v4.dark-mode .services__head{
+  color: rgba(232,222,197,.78) !important;
+}
+.v4.dark-mode .intro__side em,
+.v4.dark-mode .intro__side > p em{
+  color: var(--signal) !important;
+}
+.v4.dark-mode .intro__meta .v{ color: var(--cream) !important; }
+.v4.dark-mode .project__name{ color: var(--cream) !important; }
+.v4.dark-mode .project__meta{ color: rgba(232,222,197,.55) !important; }
+.v4.dark-mode .stat__num{ color: var(--cream) !important; }
+.v4.dark-mode .stat__label{ color: rgba(232,222,197,.65) !important; }
+.v4.dark-mode .stat__suffix{ color: rgba(232,222,197,.55) !important; }
+.v4.dark-mode .timeline__title,
+.v4.dark-mode .timeline__title em{ color: var(--cream) !important; }
+.v4.dark-mode .timeline__title em{ color: var(--signal) !important; }
+.v4.dark-mode .timeline__hint{ color: rgba(232,222,197,.55) !important; }
+/* Outline marquees (expertise, services) — text-shadow approach
+   needs the shadow colors to flip when bg flips */
+.v4.dark-mode .expertise-marquees .marquee__wrapper_content span{
+  color: var(--cream) !important;
+}
+.v4.dark-mode .expertise-marquees .marquee__wrapper_content .outline{
+  color: transparent !important;
+  text-shadow: -2px -2px 0 var(--cream), 2px -2px 0 var(--cream),
+               -2px 2px 0 var(--cream), 2px 2px 0 var(--cream) !important;
+}
+.v4.dark-mode .expertise-marquees .marquee__wrapper_content .outline:after{
+  color: transparent !important;
+}
+
+/* Same set mirrored for auto-dark via prefers-color-scheme */
+@media (prefers-color-scheme: dark){
+  .v4 .intro__side > p,
+  .v4 .portfolio__sub{
+    color: rgba(232,222,197,.78) !important;
+  }
+  .v4 .intro__meta .v{ color: var(--cream) !important; }
+  .v4 .intro__meta .k{ color: rgba(232,222,197,.55) !important; }
+  .v4 .project__name{ color: var(--cream) !important; }
+  .v4 .project__meta{ color: rgba(232,222,197,.55) !important; }
+  .v4 .stat__num{ color: var(--cream) !important; }
+  .v4 .stat__label{ color: rgba(232,222,197,.65) !important; }
+  .v4 .expertise-marquees .marquee__wrapper_content span{
+    color: var(--cream) !important;
+  }
+  .v4 .expertise-marquees .marquee__wrapper_content .outline{
+    color: transparent !important;
+    text-shadow: -2px -2px 0 var(--cream), 2px -2px 0 var(--cream),
+                 -2px 2px 0 var(--cream), 2px 2px 0 var(--cream) !important;
+  }
+}
+
+
+/* ── Hero contrast hardening — theme-aware version ──────────
+   In DEFAULT and DARK paths the hero is dark → we need LIGHT text.
+   In LIGHT class mode the hero is now light (via section conversion)
+   → we need DARK text. The base rules below set up the light-on-dark
+   default; the .v4.light-mode overrides below invert just that.
+
+   A `--hero-fg` custom property could centralize this, but keeping
+   two parallel rule sets makes the override surface explicit and
+   easier to debug in DevTools. */
+
+/* Default / dark-system / .dark-mode → hero is DARK → light text */
+.v4 .hero{
+  color: var(--cream) !important;
+}
+.v4 .hero .hero__name,
+.v4 .hero .hero__status,
+.v4 .hero .hero__line{
+  color: rgba(244,234,212,1) !important;     /* 11.2:1 on #0a0a0a, AAA */
+}
+.v4 .hero .hero__meta p{
+  color: rgba(244,234,212,.85) !important;   /* 9.5:1 AAA */
+}
+.v4 .hero .hero__tags span{
+  color: rgba(244,234,212,.85) !important;
+  border-color: rgba(255,255,255,.22) !important;
+}
+.v4 .hero .hero__scroll-cue{
+  color: rgba(244,234,212,1) !important;
+  border-color: rgba(255,255,255,.22) !important;
+}
+.v4 .hero .hero__scroll-cue:hover{
+  background: rgba(244,234,212,1) !important;
+  color: var(--ink) !important;
+  border-color: rgba(244,234,212,1) !important;
+}
+.v4 .hero .hero__bottom{
+  border-top-color: rgba(255,255,255,.10) !important;
+}
+
+/* .v4.light-mode hero → light surface, INVERT to dark text.
+   Higher specificity than the rules above so this wins cleanly
+   without fighting !important against !important. */
+.v4.light-mode .hero,
+.v4.light-mode .hero .hero__name,
+.v4.light-mode .hero .hero__status,
+.v4.light-mode .hero .hero__line{
+  color: var(--ink) !important;
+}
+.v4.light-mode .hero .hero__meta p{
+  color: rgba(0,0,0,.72) !important;          /* 11.7:1 on #f1ede2, AAA */
+}
+.v4.light-mode .hero .hero__tags span{
+  color: rgba(0,0,0,.72) !important;
+  border-color: rgba(0,0,0,.18) !important;
+}
+.v4.light-mode .hero .hero__scroll-cue{
+  color: var(--ink) !important;
+  border-color: rgba(0,0,0,.18) !important;
+}
+.v4.light-mode .hero .hero__scroll-cue:hover{
+  background: var(--ink) !important;
+  color: var(--cream) !important;
+  border-color: var(--ink) !important;
+}
+.v4.light-mode .hero .hero__bottom{
+  border-top-color: rgba(0,0,0,.10) !important;
+}
+/* Status pill background was rgba(255,255,255,.07) — invisible on light.
+   Use rgba(0,0,0,.06) for a faint dark wash on light surface. */
+.v4.light-mode .hero .hero__status{
+  background: rgba(0,0,0,.06) !important;
+  border-color: rgba(0,0,0,.12) !important;
+}
+
+
+/* ── Performance: scoped color transitions ──────────────────
+   Limited to elements that actually change on theme toggle.
+   Transitioning `*` would slow down EVERY hover/scroll interaction.
+   This targeted list animates the swap cleanly while leaving the
+   rest of the page unaffected on day-to-day use.
+   Properties chosen: only `background-color`, `color`, `border-color`
+   — these never trigger layout. */
+.v4 body.v4,
+.v4 section,
+.v4 .nav,
+.v4 .timeline__card,
+.v4 .bento__item,
+.v4 .project,
+.v4 .cta,
+.v4 .portfolio__list,
+.v4 .intro__meta > div{
+  transition: background-color .35s ease,
+              color .35s ease,
+              border-color .35s ease;
+}
+

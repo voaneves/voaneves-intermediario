@@ -1,0 +1,190 @@
+// =============================================================================
+// Portfolio section — list of projects with cursor image preview on hover.
+// =============================================================================
+
+/* =============================================================
+ * 8.  PORTFOLIO — list with cursor image preview
+ * ============================================================= */
+.portfolio{
+  background: var(--cream);
+  color: var(--ink);
+  padding: var(--pad-y) var(--pad-x) calc(var(--pad-y) + 2rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.portfolio .section-tag{ padding-left: 0; padding-right: 0; }
+.portfolio .portfolio-tag,
+.portfolio .portfolio-grid,
+.portfolio .portfolio-grid_number,
+.portfolio .portfolio-grid_text,
+.portfolio .table,
+.portfolio .monitor{ display: none !important; }
+
+.portfolio__head{
+  display: grid; grid-template-columns: 1fr auto;
+  align-items: end; gap: 24px;
+  margin: 32px 0 60px;
+}
+.portfolio__title{
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(3rem, 7vw, 6.5rem);
+  line-height: .95;
+  letter-spacing: -.03em;
+  margin: 0;
+}
+.portfolio__title em{ font-style: italic; color: var(--signal); font-weight: 900; }
+.portfolio__sub{
+  font-family: var(--font-mono);
+  font-size: .8rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  max-width: 260px;
+  opacity: .65;
+  text-align: right;
+}
+
+.portfolio__list{
+  list-style: none; margin: 0; padding: 0;
+  border-top: 1px solid var(--line);
+  
+  display: block !important;
+  grid-template-columns: none !important;
+  gap: 0 !important;
+}
+.project{
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  align-items: center;
+  gap: clamp(20px, 4vw, 60px);
+  padding: clamp(28px, 4vh, 44px) 8px;
+  border-bottom: 1px solid var(--line);
+  background: transparent !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  font-size: 1rem !important;
+  margin: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  border-radius: 0 !important;
+  aspect-ratio: auto !important;
+
+  transition: padding-left .35s cubic-bezier(.22,.61,.36,1), color .35s ease;
+}
+.project:hover{ padding-left: 24px; color: var(--signal); }
+.project::after{
+  content: "→";
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-style: italic;
+  opacity: 0;
+  transform: translateX(-12px);
+  transition: opacity .35s, transform .35s;
+  color: var(--signal);
+}
+.project:hover::after{ opacity: 1; transform: translateX(0); }
+.project__num{
+  font-family: var(--font-mono);
+  font-size: .85rem;
+  letter-spacing: .2em;
+  color: rgba(0,0,0,.4);
+}
+.project__name{
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-style: italic;
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  line-height: 1;
+  letter-spacing: -.03em;
+  font-variation-settings: "opsz" 144, "SOFT" 100;
+}
+.project__meta{
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  opacity: .6;
+  text-align: right;
+}
+.project picture{ display: none !important; }
+
+/* ── Portfolio — tablet portrait & phones (≤768px = md) ──────
+   Stacks each project as a single vertical column: num → name → meta.
+   Touch-friendly hit-area (min-height ≥ 64px, generous padding).
+   Defensively kills `position: sticky` left over from the legacy
+   .portfolio-card class that shares this <li> (already overridden
+   by !important on desktop, repeated here as a safety net for any
+   future media-query weirdness). */
+@media (max-width: 768px){
+  .portfolio{
+    padding: var(--pad-y) clamp(16px, 5vw, 32px) calc(var(--pad-y) + 1rem);
+  }
+  .portfolio__head{
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 24px 0 32px;
+  }
+  .portfolio__sub{
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .project{
+    /* Single vertical column — items stack: number, name, meta */
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+    padding: 22px 4px !important;
+    align-items: start;
+    /* Comfortable touch target (Apple HIG: ≥44pt; Material: ≥48dp) */
+    min-height: 72px;
+    /* Belt-and-suspenders sticky neutralization */
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+    max-height: none !important;
+  }
+  /* Hover indent isn't useful on touch — the ::after arrow is also
+     hidden below — but we keep a tap-feedback via :active for tactility */
+  .project:hover{ padding-left: 4px !important; color: inherit; }
+  .project:active{ background: rgba(0,0,0,.04); }
+  .project::after{ display: none; }
+
+  /* Reset meta from the previous 700px override, restore single-col flow */
+  .project__num{
+    font-size: .7rem;
+    letter-spacing: .15em;
+  }
+  .project__name{
+    font-size: clamp(2rem, 8.5vw, 3.5rem);
+    line-height: 1;
+  }
+  .project__meta{
+    grid-column: auto;
+    text-align: left;
+    font-size: .65rem;
+    opacity: .55;
+  }
+}
+
+/* ── Portfolio — small phones (≤480px = xs) ──────────────────
+   Tighter padding to maximize horizontal real estate, slightly
+   shorter project name so 4–5 letter words don't wrap awkwardly. */
+@media (max-width: 480px){
+  .portfolio{
+    padding: 48px 16px 56px;
+  }
+  .project{
+    padding: 18px 2px !important;
+    gap: 4px !important;
+  }
+  .project__name{
+    font-size: clamp(1.75rem, 9vw, 2.75rem);
+  }
+  .project__meta{
+    font-size: .6rem;
+    letter-spacing: .15em;
+  }
+}
+

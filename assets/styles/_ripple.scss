@@ -1,0 +1,40 @@
+// =============================================================================
+// Ripple / word reveal / scrollbar utilities.
+// =============================================================================
+
+/* =============================================================
+ * 12.  WORD REVEAL / RIPPLE / SCROLL BAR (kept utilities)
+ * ============================================================= */
+.pf-word{
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(0,14px,0);
+  transition: opacity .55s cubic-bezier(.22,.61,.36,1),
+              transform .55s cubic-bezier(.22,.61,.36,1);
+  will-change: opacity, transform;
+}
+.pf-word-in{ opacity: 1; transform: translate3d(0,0,0); }
+.pf-ripple{
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--signal) 0%, transparent 70%);
+  opacity: .3; transform: scale(0);
+  pointer-events: none;
+  animation: pfRipple .6s cubic-bezier(.4,0,.2,1) forwards;
+  z-index: 0;
+}
+@keyframes pfRipple{ to{ transform: scale(2.4); opacity: 0; } }
+.pf-scroll-bar{
+  position: fixed; top: 0; left: 0;
+  height: 2px; width: 100%;
+  z-index: 100; pointer-events: none;
+}
+.pf-scroll-bar::before{
+  content: "";
+  display: block; height: 100%;
+  width: var(--p, 0%);
+  background: linear-gradient(90deg, var(--hue-yellow), var(--signal));
+  transition: width .08s linear;
+  box-shadow: 0 0 10px rgba(245,0,0,.6);
+}
+

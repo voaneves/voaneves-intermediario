@@ -1,0 +1,715 @@
+// =============================================================================
+// Hero section — layout + photo + aurora + orb + cutout + brush-reveal +
+// decor chips + scroll cue + hero bottom + responsive.
+// =============================================================================
+
+/* ============================================================
+ * HERO SECTION — clean rewrite (no v4- prefix, no patches)
+ *
+ * Bug-free photo crop strategy:
+ *   clip-path: ellipse() on .hero__stage
+ *   → unlike mask-image, clip-path correctly clips children
+ *     even when they have their own GPU compositing layers
+ *     (caused by CSS filter).
+ *   → No overflow:hidden, no will-change, no isolation
+ *     on the stage-inner needed.
+ *
+ * Aurora strategy:
+ *   No filter:saturate() or will-change:transform on the
+ *   container. No will-change:transform on blobs. These were
+ *   creating GPU compositing layers whose rectangular bounds
+ *   were visible as the "square artifact".
+ * ============================================================ */
+
+/* ── Layout ──────────────────────────────────────────────── */
+.hero{
+  position: relative;
+  background: var(--ink);
+  min-height: 100dvh;
+  padding: var(--pad-y) var(--pad-x) 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.hero__grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(32px, 4vw, 80px);
+  /* Was `end` — items glued to the bottom of the (stretched) row track,
+     which created a big gap above on tall viewports. Centered now so
+     name + photo sit balanced vertically inside the section. */
+  align-items: center;
+  flex: 1;
+  padding-bottom: clamp(32px, 4vh, 60px);
+}
+.hero__name-col{ position: relative; }
+.hero__name{
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-style: italic;
+  font-size: clamp(5.5rem, 13vw, 13rem);
+  line-height: .88;
+  letter-spacing: -.03em;
+  color: var(--cream);
+  margin: 0;
+  font-variation-settings: "opsz" 144;
+}
+.hero__line{ display: block; }
+.hero__line--right{ text-align: right; padding-right: .04em; }
+
+.hero__meta{
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 520px;
+}
+.hero__status{
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: max-content;
+  gap: 0;
+  padding: 8px 16px 8px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.15);
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--cream);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+.hero__status::before{
+  content: "";
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34,197,94,.25), 0 0 8px rgba(34,197,94,.5);
+  margin-right: 9px;
+  flex-shrink: 0;
+  animation: v4StatusPulse 2.2s ease-in-out infinite;
+}
+@keyframes v4StatusPulse{
+  0%,100%{ opacity: 1; }
+  50%{ opacity: .45; }
+}
+.hero__meta p{
+  font-family: var(--font-display);
+  font-size: clamp(.95rem, 1.5vw, 1.15rem);
+  line-height: 1.55;
+  color: rgba(244,234,212,.75);
+  max-width: 42ch;
+}
+
+/* ── Photo container ──────────────────────────────────────── */
+.hero__photo{
+  position: relative;
+  height: clamp(360px, 58vh, 580px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  overflow: visible;
+  /* NO isolation:isolate — creates a rectangular GPU compositing layer
+     whose hard edges are visible against the dark background. */
+  background: transparent;
+  cursor: pointer;
+}
+
+/* ── Aurora: floating colour blobs ──────────────────────────
+   NO filter:saturate() → would create GPU compositing layer
+     whose rectangular bounds become visible.
+   NO will-change:transform on container → same issue.
+   NO overflow:hidden → would clip blurred blobs at rect bounds.
+   Blobs have filter:blur() for softness; their blur extends
+   naturally in normal flow with no layer-boundary clipping. */
+.hero__aurora{
+  position: absolute;
+  inset: -15%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 0;
+  /* parallax driven by JS via CSS vars */
+  transform: translate3d(var(--aurora-x,0), var(--aurora-y,0), 0);
+  transition: transform .55s cubic-bezier(.22,.61,.36,1);
+}
+.hero__aurora-blob{
+  position: absolute;
+  width: 60%; height: 70%;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: .7;
+  transform-origin: center;
+  /* NO will-change:transform — would promote each blob to a GPU
+     compositing layer and clip blur at its rectangular bounds */
+}
+.hero__aurora-blob--orange{
+  background: radial-gradient(circle, rgba(255,107,53,.95), transparent 70%);
+  top: -18%; left: -12%;
+  animation: v4Float1 32s cubic-bezier(.45,0,.55,1) infinite alternate;
+}
+.hero__aurora-blob--blue{
+  background: radial-gradient(circle, rgba(107,169,255,.95), transparent 70%);
+  top: -8%; right: -18%;
+  animation: v4Float2 38s cubic-bezier(.45,0,.55,1) infinite alternate;
+}
+.hero__aurora-blob--pink{
+  background: radial-gradient(circle, rgba(255,93,158,.85), transparent 70%);
+  bottom: -22%; right: 6%;
+  animation: v4Float3 28s cubic-bezier(.45,0,.55,1) infinite alternate;
+  animation-delay: -8s;
+}
+.hero__aurora-blob--yellow{
+  background: radial-gradient(circle, rgba(243,192,67,.7), transparent 70%);
+  bottom: 10%; left: -14%;
+  animation: v4Float4 42s cubic-bezier(.45,0,.55,1) infinite alternate;
+  animation-delay: -16s;
+}
+.hero__aurora-blob--red{
+  background: radial-gradient(circle, rgba(245,0,0,.7), transparent 70%);
+  top: 24%; left: 32%;
+  width: 50%; height: 55%;
+  animation: v4Float5 26s cubic-bezier(.45,0,.55,1) infinite alternate;
+  animation-delay: -4s;
+}
+@keyframes v4Float1{
+  0%  { transform: translate(0,0) scale(1); }
+  100%{ transform: translate(22%,18%) scale(1.25); }
+}
+@keyframes v4Float2{
+  0%  { transform: translate(0,0) scale(1.1); }
+  100%{ transform: translate(-18%,22%) scale(.85); }
+}
+@keyframes v4Float3{
+  0%  { transform: translate(0,0) scale(1); }
+  100%{ transform: translate(-26%,-18%) scale(1.18); }
+}
+@keyframes v4Float4{
+  0%  { transform: translate(0,0) scale(1.05); }
+  100%{ transform: translate(22%,-12%) scale(.92); }
+}
+@keyframes v4Float5{
+  0%  { transform: translate(0,0) scale(.9); }
+  100%{ transform: translate(18%,28%) scale(1.15); }
+}
+
+/* Aurora overlay removed: the previous dark gradient tint was muting
+   the orb/aurora glow and creating a vignette feel over the photo. */
+
+/* ── Orb: warm glow that tracks the cursor ───────────────── */
+.hero__orb{
+  position: absolute;
+  inset: -28% -25%;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 65% at 50% 50%,
+      rgba(255,195,130,.55) 0%,
+      rgba(255,130,90,.36) 22%,
+      rgba(245,0,0,.18) 45%,
+      rgba(245,0,0,.06) 65%,
+      transparent 80%);
+  filter: blur(46px);
+  mix-blend-mode: screen;
+  transform: translate3d(var(--orb-x,0), var(--orb-y,0), 0) scale(var(--orb-s,1));
+  transition: opacity .6s ease;
+  opacity: .85;
+}
+body.light-mode .hero__orb{
+  background:
+    radial-gradient(ellipse 55% 65% at 50% 50%,
+      rgba(255,215,170,.5) 0%,
+      rgba(245,130,100,.28) 25%,
+      rgba(245,0,0,.10) 55%,
+      transparent 80%);
+  mix-blend-mode: multiply;
+  opacity: .55;
+}
+
+/* ── Stage inner: the 3-D tilting frame that holds the photo ─
+   Rectangular portrait with softly rounded corners. The previous
+   ellipse() clip-path was distorting the face — switched to
+   border-radius + overflow:hidden so the image keeps its natural
+   portrait proportions. ───────────────────────────────────── */
+.hero__stage{
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  transform-style: preserve-3d;
+  transition: transform .8s cubic-bezier(.22,.61,.36,1);
+  background: transparent;
+  border-radius: 28px;
+  overflow: hidden;
+  /* Safari clipping fix: forces the WebKit compositor to honor the
+     parent border-radius on transformed children. Solid white mask
+     (no gradient) means NO vignette / fade — the photo stays sharp
+     edge-to-edge inside the rounded rectangle. */
+  -webkit-mask-image: linear-gradient(#fff, #fff);
+          mask-image: linear-gradient(#fff, #fff);
+}
+.hero__photo.is-active .hero__stage{
+  transition: transform .15s linear;
+}
+
+/* ── Photo cutout: image + breathing animation ──────────────
+   No mask-image here — clip-path on the parent handles the crop.
+   No will-change (unnecessary, the JS drives transform directly).
+   No filter on the image — filter on a child would promote it
+     to its own GPU compositing layer, which in Chrome breaks
+     parent clip-path / mask-image clipping. ──────────────── */
+.hero__cutout{
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  transform: translate3d(var(--photo-x,0), var(--photo-y,0), 0);
+  transition: transform .55s cubic-bezier(.22,.61,.36,1);
+  animation: v4PhotoBreathe 9s ease-in-out infinite alternate;
+}
+@keyframes v4PhotoBreathe{
+  0%  { scale: 1; }
+  100%{ scale: 1.025; }
+}
+.hero__photo:hover .hero__cutout{
+  animation-play-state: paused;
+}
+.hero__img{
+  position: absolute;
+  inset: 0;
+  width: 100% !important; height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 15%;
+  /* Bottom layer is now ALWAYS in full color. The grayscale lives on
+     the .hero__reveal canvas overlay above, which the user erases
+     via mousemove (destination-out brush) to "scratch" the colors back. */
+  filter: contrast(1.04) saturate(1.06) !important;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* ── Brush-reveal canvas ───────────────────────────────────
+   Sits on top of .hero__img inside the cutout. JS paints a
+   grayscale copy of the photo into it once on load/resize, then
+   uses globalCompositeOperation = 'destination-out' with a soft
+   radial gradient on every pointermove to erase brush stamps,
+   revealing the colored image below. Strokes persist (we never
+   repaint the gray layer except on resize). ───────────────── */
+.hero__reveal{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
+/* Suppress deprecated elements that may linger in the DOM */
+.hero__photo .image,
+.hero-stack,
+.hero-band,
+.hero-mesh,
+.hero-wake-canvas,
+.hero__chip-pulse{
+  display: none !important;
+}
+
+/* ── Floating depth chips ────────────────────────────────── */
+.hero__decor{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  perspective: 800px;
+}
+.hero__chip{
+  position: absolute;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid rgba(255,255,255,.18);
+  transform:
+    translate3d(var(--chip-x,0), var(--chip-y,0), 0)
+    rotate(calc(var(--rot,0deg) + var(--chip-rot-offset,0deg)))
+    scale(var(--chip-scale,1));
+  transition: opacity .6s ease, box-shadow .35s ease;
+  opacity: 0;
+}
+.hero__photo.is-revealed .hero__chip{ opacity: 1; }
+.hero__chip[data-engaged="1"]{
+  box-shadow: 0 0 0 1px rgba(255,255,255,.4),
+              0 24px 50px -10px rgba(245,0,0,.5),
+              0 12px 30px -6px rgba(0,0,0,.55);
+  will-change: transform;
+}
+.hero__chip:not([data-engaged="1"]){ will-change: auto; }
+
+/* Depth personalities */
+.hero__chip[data-depth="1.0"]{
+  background: var(--cream); color: var(--ink);
+  box-shadow: 0 16px 40px -10px rgba(0,0,0,.55);
+  font-size: .76rem; padding: 11px 22px; z-index: 4;
+}
+.hero__chip[data-depth="0.85"]{
+  background: var(--ink); color: var(--cream);
+  box-shadow: 0 14px 30px -8px rgba(0,0,0,.5); z-index: 3;
+}
+.hero__chip[data-depth="0.6"]{
+  background: var(--hue-yellow); color: var(--maroon);
+  box-shadow: 0 12px 24px -8px rgba(0,0,0,.4);
+  z-index: 2; opacity: .92 !important;
+}
+.hero__chip[data-depth="0.35"]{
+  background: rgba(255,255,255,.12); color: rgba(255,255,255,.85);
+  border-color: rgba(255,255,255,.18);
+  font-size: .62rem; padding: 7px 14px;
+  z-index: 1; opacity: .75 !important;
+}
+
+/* Positions + base rotations */
+.hero__chip[data-pos="tl"]{ top: 8%;    left: -6%;   --rot: -7deg; }
+.hero__chip[data-pos="tr"]{ top: 22%;   right: -8%;  --rot:  5deg; }
+.hero__chip[data-pos="bl"]{ bottom: 22%; left: -8%;  --rot: -3deg; }
+.hero__chip[data-pos="br"]{ bottom: 6%; right: -4%;  --rot:  8deg; }
+
+/* Stagger chip reveal */
+.hero__photo.is-revealed .hero__chip[data-pos="tl"]{ transition-delay: .15s; }
+.hero__photo.is-revealed .hero__chip[data-pos="tr"]{ transition-delay: .25s; }
+.hero__photo.is-revealed .hero__chip[data-pos="bl"]{ transition-delay: .35s; }
+.hero__photo.is-revealed .hero__chip[data-pos="br"]{ transition-delay: .45s; }
+
+/* ── Name marquee inside the photo ──────────────────────────
+   Was hidden behind the photo card. Now sits IN FRONT of it,
+   matched exactly to the .hero__stage bounds, with the
+   same border-radius so it doesn't leak past the rounded corners.
+
+   Specificity note: the inline <style> in index.html has a rule
+   at (0,3,0): `.header-content .middle .hero__marquee{...}` that
+   sets top:50%, transform, width:100%. To override cleanly I use
+   `.hero__photo .hero__marquee` which is also (0,3,0) —
+   same specificity, but playful.css loads AFTER the inline style,
+   so source-order wins. Properties from the inline rule that
+   conflict with `inset:0` (top, transform, width) are explicitly
+   reset below. */
+.hero__photo .hero__marquee{
+  position: absolute;
+  inset: 0;                /* match .hero__stage bounds */
+  top: 0;                  /* override inline top:50% */
+  width: auto;             /* override inline width:100% */
+  transform: none;         /* override inline translateY(-50%) */
+  z-index: 3;              /* above .hero__stage (z:2),
+                              below the role chips (z:5) */
+  pointer-events: none;    /* don't intercept cursor / brush events */
+  overflow: hidden;        /* clip the scrolling text to the box */
+  border-radius: 28px;     /* match the photo card's rounded corners */
+  display: flex;
+  align-items: center;     /* center the marquee row vertically */
+}
+
+/* Difference blend: white text inverts against the photo behind
+   it, adapting frame by frame to whatever's underneath. Same trick
+   the cursor (.pf-cur) and badge (.badge) use. */
+.hero__marquee .marquee__wrapper_content{
+  mix-blend-mode: difference;
+}
+
+/* ── Bottom bar ──────────────────────────────────────────── */
+.hero__bottom{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0 32px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  margin-top: auto;
+}
+.hero__tags{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.hero__tags span{
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.18);
+  font-family: var(--font-mono);
+  font-size: .65rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(244,234,212,.7);
+  opacity: 0;
+}
+.hero__scroll-cue{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.2);
+  font-family: var(--font-mono);
+  font-size: .65rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--cream);
+  text-decoration: none;
+  transition: background .25s, color .25s, border-color .25s;
+  opacity: 0;
+}
+.hero__scroll-cue:hover{ background: var(--cream); color: var(--ink); border-color: var(--cream); }
+.hero__scroll-cue-arrow{
+  position: relative;
+  width: 12px; height: 12px;
+  flex-shrink: 0;
+}
+.hero__scroll-cue-arrow::before,
+.hero__scroll-cue-arrow::after{
+  content: "";
+  position: absolute;
+  left: 2px; top: 2px;
+  width: 7px; height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translate(-2px,-2px);
+  animation: pfBounce 1.5s ease-in-out infinite;
+}
+.hero__scroll-cue-arrow::after{ animation-delay: .2s; opacity: .4; }
+@keyframes pfBounce{
+  0%,100%{ transform: rotate(45deg) translate(-2px,-2px); opacity: .6; }
+  50%    { transform: rotate(45deg) translate(2px,2px);   opacity: 1; }
+}
+
+/* ── Rotating circular badge (body root) ────────────────────
+   Positioned fixed, follows cursor over .hero__photo via JS.
+   SVG path radius = 52 → circumference ≈ 327px (enough for
+   the repeated text at the chosen font-size + letter-spacing). */
+.badge{
+  position: fixed;
+  top: 0; left: 0;
+  width: 130px; height: 130px;
+  z-index: 9000;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  /* Center of the badge tracks the cursor tip:
+       translate(--badge-x − 50%, --badge-y − 50%) snaps the badge's
+       geometric center onto (--badge-x, --badge-y) which the JS sets
+       to the live cursor coordinates while hovering the photo. */
+  transform:
+    translate(
+      calc(var(--badge-x, 0px) - 50%),
+      calc(var(--badge-y, 0px) - 50%)
+    )
+    scale(var(--badge-s, .5));
+  /* Only fade is animated — NO transform transition, so the badge
+     translates 1:1 with the cursor on every pointermove update. */
+  transition: opacity .35s ease;
+  /* Same blend the cursor (.pf-cur / .pf-ring) uses: difference
+     inverts the badge against whatever sits behind it, so text and
+     the center chip adapt automatically — no drop-shadow needed
+     (filter would create a stacking context that breaks blend, and
+     so would isolation: isolate, so neither is used here). */
+  mix-blend-mode: difference;
+}
+/* .is-visible is the canonical class (matches the spec).
+   .is-on kept as an alias so legacy code keeps working. */
+.badge.is-visible,
+.badge.is-on{ opacity: 1; }
+.badge svg{
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  animation: v4BadgeRotate 18s linear infinite;
+  transform-origin: center;
+}
+.badge__text{
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  fill: var(--cream);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.badge__center{
+  position: relative;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--signal);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: italic;
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15), 0 6px 18px -4px rgba(245,0,0,.55);
+  z-index: 2;
+}
+@keyframes v4BadgeRotate{
+  to{ transform: rotate(360deg); }
+}
+body.light-mode .badge__text{ fill: var(--ink); }
+
+/* ── Entrance animations ─────────────────────────────────── */
+@keyframes pfDropIn{
+  0%  { transform: translate3d(0,-40px,0) scale(.95); opacity: 0; }
+  60% { transform: translate3d(0, 8px, 0) scale(1.02); opacity: 1; }
+  80% { transform: translate3d(0,-3px, 0) scale(.99); }
+  100%{ transform: translate3d(0, 0, 0)  scale(1); }
+}
+@keyframes pfFadeUp{
+  from{ transform: translate3d(0,16px,0); opacity: 0; }
+  to  { transform: translate3d(0, 0, 0);  opacity: 1; }
+}
+@media (prefers-reduced-motion: no-preference){
+  .hero__meta{
+    animation: pfDropIn .9s cubic-bezier(.34,1.56,.64,1) .35s both;
+  }
+  .hero__photo{
+    animation: pfDropIn 1.1s cubic-bezier(.34,1.56,.64,1) .55s both;
+  }
+  .hero__tags span{
+    animation: pfFadeUp .55s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .hero__tags span:nth-child(1){ animation-delay: .9s; }
+  .hero__tags span:nth-child(2){ animation-delay: 1s; }
+  .hero__tags span:nth-child(3){ animation-delay: 1.1s; }
+  .hero__tags span:nth-child(4){ animation-delay: 1.2s; }
+  .hero__tags span:nth-child(5){ animation-delay: 1.3s; }
+  .hero__tags span:nth-child(6){ animation-delay: 1.4s; }
+  .hero__scroll-cue{
+    animation: pfFadeUp .7s cubic-bezier(.22,.61,.36,1) 1.5s both;
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────────
+   Single mobile/tablet breakpoint at 900px (matches lg in the
+   SCSS breakpoint map). Below that everything stacks; below xs
+   (480px) we tighten further for small phones.                 */
+@media (max-width: 900px){
+  /* SECTION-LEVEL fixes for mobile/tablet:
+     1) Kill horizontal scroll caused by aurora/orb bleeding past
+        the photo box. We can't put overflow-x:hidden on
+        .hero__photo (it would clip chips & glow on desktop),
+        so we apply it on the section only at this breakpoint.
+     2) Clear the fixed top nav. The nav is ~75-80px tall; the
+        section's padding-top uses --pad-y = clamp(60px, 10vh, 140px),
+        which on viewports shorter than ~800px tall (landscape
+        phones, smaller laptops) drops below nav height and the
+        photo gets eaten by the navbar. max() floors at 96px while
+        keeping --pad-y when the viewport is tall enough. */
+  .hero{
+    overflow-x: hidden;
+    padding-top: max(96px, var(--pad-y));
+    scroll-margin-top: 96px; /* same offset for #home anchor jumps */
+  }
+
+  /* 1) Layout — single column, photo on top, tighter spacing.
+        Photo height capped via clamp() so it never pushes the
+        title below the fold AND doesn't crash into the nav. */
+  .hero__grid{
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding-bottom: 20px;
+  }
+  .hero__photo{
+    height: clamp(280px, 48vh, 460px);
+    order: -1;
+  }
+
+  /* 2a) Hero title — fits 320px → 900px without horizontal scroll. */
+  .hero__name{
+    font-size: clamp(3.5rem, 18vw, 7rem);
+    line-height: .9;
+    letter-spacing: -.025em;
+  }
+  .hero__line--right{ padding-right: 0; }
+
+  /* 2b) Marquee text inside the photo. The compiled rule on
+        .marquee__wrapper_content span uses max(5rem, 10vw),
+        floor 80px — way too big on a 320px phone. Override with
+        higher specificity (.hero__photo .hero__marquee ...) so
+        it only retunes the hero marquee, leaving expertise and
+        footer marquees alone. */
+  .hero__photo .hero__marquee .marquee__wrapper_content span{
+    font-size: clamp(2.25rem, 9vw, 5rem);
+    line-height: 1.1;
+  }
+
+  /* Meta block — tighter, no max-width cap so it flows full bleed */
+  .hero__meta{ margin-top: 16px; gap: 14px; max-width: none; }
+  .hero__meta p{ font-size: clamp(.9rem, 2.4vw, 1.05rem); }
+
+  /* 3) Role chips hidden — they cover the photo on narrow
+        viewports, and the magnet effect doesn't fire on touch
+        anyway, so they're pure visual noise. */
+  .hero__decor{ display: none !important; }
+
+  /* Circular badge hidden (no cursor follow on touch, no value) */
+  .badge{ display: none !important; }
+
+  /* Hero bottom — stack tags above scroll cue, allow wrap */
+  .hero__bottom{
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 16px 0 24px;
+  }
+  .hero__tags{ flex-wrap: wrap; gap: 6px; }
+  .hero__tags span{ font-size: .65rem; padding: 7px 12px; }
+}
+
+/* Extra-small phones (≤480px, matches xs in the SCSS map).
+   Title gets even tighter, photo a bit shorter so the meta
+   block + tags stay visible without scroll on a 320×640 device. */
+@media (max-width: 480px){
+  .hero__photo{ height: clamp(240px, 40vh, 360px); }
+  .hero__name{
+    font-size: clamp(3rem, 16vw, 5rem);
+    letter-spacing: -.03em;
+  }
+  .hero__photo .hero__marquee .marquee__wrapper_content span{
+    font-size: clamp(1.875rem, 8.5vw, 3rem);
+  }
+  .hero__tags span{ font-size: .6rem; padding: 6px 10px; }
+}
+
+/* ── Accessibility / motion ──────────────────────────────── */
+@media (hover: none){
+  .hero__chip{
+    opacity: 1 !important;
+    --chip-x: 0 !important;
+    --chip-y: 0 !important;
+  }
+  .hero__orb{ opacity: .55; }
+  .badge{ display: none !important; }
+}
+@media (prefers-reduced-motion: reduce){
+  .hero__aurora-blob{ animation: none !important; }
+  .hero__cutout{ animation: none !important; }
+  .hero__chip{ transition: opacity .3s ease !important; }
+  .badge svg{ animation: none !important; }
+  .hero__stage{ transition: none !important; }
+}
+
+/* ── Dark mode — hero photo gets a touch more desaturation
+   so it doesn't compete with the brush-reveal effect. Light-mode
+   hero override moved to the main theme block above. */
+.v4.dark-mode .hero__img--primary{
+  filter: grayscale(80%) brightness(.9) !important;
+}

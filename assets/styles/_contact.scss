@@ -1,0 +1,94 @@
+// =============================================================================
+// Contact section — massive statement on red bg + glitch email + icons.
+// =============================================================================
+
+/* =============================================================
+ * 10.  CONTACT — massive statement, red bg
+ * ============================================================= */
+.contact{
+  background: var(--signal);
+  color: #fff;
+  padding: var(--pad-y) var(--pad-x);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.contact .contact-tag,
+.contact .contact-content_number,
+.contact .contact-marquee{ display: none !important; }
+.contact .section-tag{ padding: 0; }
+.contact .contact-content{
+  background: var(--signal) !important;
+  padding: 0 !important;
+}
+.contact__statement{
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(3.5rem, 12vw, 12rem);
+  line-height: .92;
+  letter-spacing: -.04em;
+  margin: 60px 0 32px;
+  font-variation-settings: "opsz" 144, "SOFT" 100;
+}
+.contact__statement em{ font-style: italic; color: var(--ink); font-weight: 900; }
+.contact__email-btn{
+  display: inline-flex; align-items: center; gap: 16px;
+  background: var(--ink); color: #fff;
+  padding: 22px 36px;
+  border-radius: 999px;
+  margin: 0 0 60px;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.contact__email-btn .glitch{
+  font-family: var(--font-display) !important;
+  font-style: italic !important;
+  font-weight: 900 !important;
+  font-size: clamp(2rem, 5vw, 4rem) !important;
+  color: #fff !important;
+  margin: 0 !important;
+  position: relative;
+  display: inline-block;
+}
+.contact__email-meta{
+  font-family: var(--font-mono);
+  font-size: .82rem; letter-spacing: .15em;
+  text-transform: uppercase;
+  opacity: .85;
+}
+.contact__email-btn:hover{ background: var(--cream); color: var(--ink); }
+.contact__email-btn:hover .glitch{ color: var(--ink) !important; }
+
+.contact__meta{
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  margin-bottom: 60px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255,255,255,.25);
+}
+.contact__meta > div{ display: flex; flex-direction: column; gap: 6px; }
+.contact__meta .k{ font-family: var(--font-mono); font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; opacity: .7; }
+.contact__meta .v{ font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; }
+.contact__meta .v a{ color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+.contact__meta .v a:hover{ color: var(--ink); }
+
+.contact__icons{
+  display: flex; gap: 12px; flex-wrap: wrap;
+  margin: 0 !important;
+}
+.contact__icons .icon{
+  background: rgba(0,0,0,.2) !important;
+  color: #fff !important;
+  width: 50px !important; height: 50px !important;
+  border-radius: 50% !important;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 !important;
+  border: 1px solid rgba(255,255,255,.18);
+  transition: background .25s, color .25s;
+}
+.contact__icons .icon:hover{ background: var(--ink) !important; color: #fff !important; }
+.contact__icons .icon i{ color: inherit !important; }
+
+@media (max-width: 700px){
+.contact__meta{ grid-template-columns: 1fr; }
+}
+

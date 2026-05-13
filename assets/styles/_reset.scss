@@ -1,0 +1,87 @@
+// =============================================================================
+// Global resets + page-level scaffolding for the modern (v4) design.
+// Extracted from playful.css (blocks 1 + 14 + scattered globals).
+// =============================================================================
+
+
+/* =============================================================
+ * 1.  GLOBAL RESETS — calm the original styles.css down
+ * ============================================================= */
+body.v4{
+  font-family: var(--font-display) !important;
+  background: var(--cream) !important;
+  color: var(--ink) !important;
+}
+body.v4 *{ cursor: inherit; }
+/* Sections fill the viewport for an immersive scroll feel. */
+.v4 section{ min-height: 100vh; min-height: 100dvh; }
+.v4 section[data-section-bg="ink"]{ background: var(--ink); color: #fff; }
+.v4 section[data-section-bg="cream"]{ background: var(--cream); color: var(--ink); }
+.v4 section[data-section-bg="red"]{ background: var(--signal); color: #fff; }
+.v4 .container{ display: block; }
+.skip-link{
+  position: absolute; top: -100px; left: 16px;
+  background: #000; color: #fff; padding: 8px 14px;
+  z-index: 9999; border-radius: 6px;
+}
+.skip-link:focus{ top: 16px; }
+.section-tag{
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: .6em;
+  padding: clamp(20px, 4vh, 48px) var(--pad-x) 0;
+  opacity: .8;
+}
+.section-tag span{ color: var(--signal); }
+.section-tag[data-on-dark]{ color: rgba(255,255,255,.7); }
+.v4 #cursor, .v4 #cursor-border{ display: none !important; }
+@media (hover: none), (prefers-reduced-motion: reduce){
+.v4, .v4 *{ cursor: auto !important; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference){
+body.v4{ cursor: none; }
+  .v4 a, .v4 button, .v4 [data-cursor], .v4 .control,
+  .v4 .cta, .v4 .icon, .v4 .timeline__card, .v4 .project,
+  .v4 .utility-btn, .v4 .contact__email-btn,
+  .v4 input, .v4 .bento__item{ cursor: none; }
+}
+/* =============================================================
+ * 14.  REDUCED-MOTION
+ * ============================================================= */
+@media (prefers-reduced-motion: reduce){
+.pf-word{ opacity: 1; transform: none; transition: none; }
+  .pf-ripple, .pf-scroll-bar, .pf-cur, .pf-ring, .pf-label, .pf-img-preview{ display: none; }
+  .stat, .timeline__card, .bento__item{ transform: none !important; transition: none !important; }
+  .pf-letter{ transform: none; transition: none; }
+}
+.v4 .sidebar,
+.v4 .sidebar-toggle,
+.v4 .sidebar-wrapper,
+.v4 .sidebar-menu{
+  display: none !important;
+}
+.v4 .marquee__wrapper .t100s{ animation-duration: 240s !important; }
+.v4 .marquee__wrapper .t50s { animation-duration: 130s !important; }
+.v4 .marquee__wrapper .t25s { animation-duration: 80s  !important; }
+
+.footer__marquee .marquee__wrapper .t25s{
+  animation-duration: 90s !important;
+}
+
+.pf-letter{ background: linear-gradient(180deg, var(--cream) 70%, rgba(244,234,212,.85) 100%); -webkit-background-clip: text; background-clip: text; }
+@supports not (-webkit-background-clip: text){
+.pf-letter{ color: var(--cream); background: none; }
+}
+.v4 section{
+  transition: background-color .8s cubic-bezier(.22,.61,.36,1);
+}
+.v4 a:focus-visible,
+.v4 button:focus-visible,
+.cta:focus-visible{
+  outline: 2px solid var(--signal);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+.bento__item .title h2:after{ display: none !important; }

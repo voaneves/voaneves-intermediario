@@ -1,0 +1,71 @@
+// =============================================================================
+// Intro section — editorial statement + side note + meta grid.
+// =============================================================================
+
+/* =============================================================
+ * 4.  INTRO / WHO — editorial statement
+ * ============================================================= */
+.intro{
+  background: var(--cream);
+  padding: var(--pad-y) var(--pad-x) calc(var(--pad-y) + 2rem);
+  border-bottom: 1px solid var(--line);
+  /* Immersive scroll: section fills the viewport, content centers vertically.
+     Old !important overrides for legacy .who-content rules removed — those
+     no longer match the markup after Fase 3. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.intro .section-tag{ padding-left: 0; padding-right: 0; padding-top: 0; }
+.intro__grid{
+  display: grid;
+  grid-template-columns: 1.4fr .8fr;
+  gap: clamp(40px, 6vw, 100px);
+  margin-top: 40px;
+  align-items: end;
+  max-width: 1500px;
+}
+.intro__statement{
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-style: normal;
+  font-variation-settings: "opsz" 144, "SOFT" 50;
+  font-size: clamp(2.2rem, 5.4vw, 5.4rem);
+  line-height: 1.02;
+  letter-spacing: -.03em;
+  color: var(--ink);
+  margin: 0;
+}
+.intro__statement .intro__statement-line{ display: block; }
+.intro__statement em{
+  font-style: italic;
+  font-weight: 800;
+  color: var(--signal);
+  font-variation-settings: "opsz" 144, "SOFT" 100;
+}
+.intro__side{
+  display: flex; flex-direction: column; gap: 32px;
+  font-family: var(--font-display);
+}
+.intro__side > p{
+  font-size: 1.15rem;
+  line-height: 1.55;
+  max-width: 38ch;
+  color: #2a2a2a;
+}
+.intro__side em{ font-style: italic; color: var(--signal); font-weight: 600; }
+.intro__meta{ display: grid; gap: 14px; }
+.intro__meta > div{
+  display: grid; grid-template-columns: auto 1fr; gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-mono); font-size: .82rem;
+}
+.intro__meta > div:last-child{ border-bottom: 1px solid var(--line); }
+.intro__meta .k{ color: rgba(0,0,0,.5); text-transform: uppercase; letter-spacing: .15em; font-size: .7rem; }
+.intro__meta .v{ font-family: var(--font-display); font-weight: 600; }
+
+@media (max-width: 900px){
+.intro__grid{ grid-template-columns: 1fr; gap: 40px; }
+}
+

@@ -1,0 +1,106 @@
+// =============================================================================
+// Theme system — three-tier resolution
+//
+// Layer 1 (defaults):  :root in _tokens.scss carries the default tokens,
+//                      tuned for a LIGHT environment / no system preference.
+//
+// Layer 2 (system):    @media (prefers-color-scheme: dark) :root overrides
+//                      tokens automatically when the OS is in dark mode.
+//                      No JavaScript needed.
+//
+// Layer 3 (user):      .light-mode / .dark-mode on <body> overrides the
+//                      system preference when the user clicks the toggle.
+//                      Beats the @media block by specificity (class on body
+//                      wins over :root inside @media).
+//
+// Resulting precedence: explicit toggle  >  system preference  >  default.
+//
+// Notes for Fase 1:
+//   - The legacy palette (--color-primary, --color-secondary, --color-white)
+//     keeps its own light/dark blocks inside _header.scss for now. The two
+//     rule sets target DIFFERENT custom properties on the same .light-mode
+//     / .dark-mode element, so the cascade merges them cleanly.
+//   - playful.css still re-declares the same theme rules with a `.v4`
+//     prefix (higher specificity). Visual output is unchanged because the
+//     declared values match. The duplicate is removed in Fase 2.
+//   - The section-conversion rules (`section[data-section-bg="..."]`) and
+//     the component-level overrides currently in playful.css are NOT moved
+//     here yet — they belong in the section partials created during Fase 2.
+// =============================================================================
+
+/* ── System dark — automatic, respects OS preference ──────────────────────
+   Token strategy mirrors .dark-mode (full dark, pure black bg, warm cream
+   text, brighter signal red). */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink:          #000000;
+    --ink-soft:     #0e0e0e;
+    --cream:        #e8dec5;
+    --cream-soft:   #c8bda1;
+    --signal:       #ff3838;
+    --signal-2:     #ff5a5a;
+    --line:         rgba(255, 255, 255, 0.12);
+    --line-on-dark: rgba(255, 255, 255, 0.12);
+  }
+}
+
+/* ── System light — explicit anchor for symmetry ──────────────────────────
+   This block is intentionally empty: :root already carries the light
+   defaults. Kept as a documentation anchor so future light-specific
+   refinements have an obvious home. */
+@media (prefers-color-scheme: light) {
+  :root {
+    /* defaults already in :root above */
+  }
+}
+
+/* ── USER OVERRIDE: explicit LIGHT mode ───────────────────────────────────
+   When the user clicks the toggle to light, this beats whatever the system
+   preference set. Class on body has higher specificity than :root inside
+   @media. No JS-driven media query swap needed.
+
+   Token strategy:
+     --cream      → primary surface (warm offwhite #fcfcf8 reads cleaner
+                    than pure #fff which feels harsh)
+     --cream-soft → secondary surface (cards, raised elements)
+     --ink        → primary text (pure black for max contrast)
+     --signal     → CTA red, darkened from #f50000 to #c41a1a so button
+                    text passes AA on red background
+
+   Contrast checks:
+     #0a0a0a on #fcfcf8 = 20.4:1  ✓ AAA  (body text)
+     #c41a1a on #fcfcf8 = 6.0:1   ✓ AA Large + UI components
+     rgba(0,0,0,.55) on #fcfcf8 = 7.6:1 ✓ AAA  (muted text) */
+.light-mode {
+  --cream:        #fcfcf8;
+  --cream-soft:   #f1ede2;
+  --ink:          #0a0a0a;
+  --ink-soft:     #1a1a1a;
+  --signal:       #c41a1a;
+  --signal-2:     #e62525;
+  --line:         rgba(0, 0, 0, 0.10);
+  --line-on-dark: rgba(0, 0, 0, 0.10);
+}
+
+/* ── USER OVERRIDE: explicit DARK mode ────────────────────────────────────
+   Token strategy:
+     --ink        → pure black (#000) for max contrast and OLED win
+     --ink-soft   → near-black surface for cards (subtle elevation)
+     --cream      → muted warm offwhite text (#e8dec5) — easier on eyes
+                    than #fff which can vibrate against pure black
+     --signal     → brighter red (#ff3838) for vibrancy on deep dark
+
+   Contrast checks:
+     #e8dec5 on #000000 = 14.3:1 ✓ AAA  (body text)
+     #ff3838 on #000000 = 5.7:1  ✓ AA  (CTA red)
+     rgba(232,222,197,.6) on #000 = 8.6:1 ✓ AAA (muted text) */
+.dark-mode {
+  --cream:        #e8dec5;
+  --cream-soft:   #c8bda1;
+  --ink:          #000000;
+  --ink-soft:     #0e0e0e;
+  --signal:       #ff3838;
+  --signal-2:     #ff5a5a;
+  --line:         rgba(255, 255, 255, 0.12);
+  --line-on-dark: rgba(255, 255, 255, 0.12);
+}

@@ -1,0 +1,53 @@
+// =============================================================================
+// Expertise section — stacked marquees (text, outline, code stack).
+// =============================================================================
+
+/* =============================================================
+ * 6.  EXPERTISE — refined marquees
+ * ============================================================= */
+.expertise{
+  background: var(--cream);
+  padding: var(--pad-y) 0;
+  border-bottom: 1px solid var(--line);
+  /* Immersive scroll: marquees centered vertically in 100vh. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.expertise .section-tag{ padding: 0 var(--pad-x) 60px; }
+.expertise .expertise-marquees{ display: flex; flex-direction: column; gap: 20px; }
+.expertise .expertise-marquees .marquee{ height: auto; }
+.expertise .expertise-marquees .marquee__wrapper_content{
+  display: flex; gap: 60px;
+  font-family: var(--font-display) !important;
+  font-style: italic;
+  font-weight: 800;
+  font-size: clamp(3rem, 8vw, 7rem) !important;
+  font-variation-settings: "opsz" 144, "SOFT" 100;
+  letter-spacing: -.02em;
+  line-height: 1.05;
+}
+.expertise .expertise-marquees .marquee__wrapper_content span{
+  font-family: inherit !important;
+  font-size: inherit !important;
+  color: var(--ink) !important;
+  font-weight: inherit !important;
+  text-transform: none !important;
+  white-space: nowrap;
+}
+.expertise .expertise-marquees .marquee__wrapper_content span:after{
+  content: "✺";
+  font-family: var(--font-mono);
+  color: var(--signal);
+  padding: 0 .4em;
+  font-size: .55em;
+  vertical-align: middle;
+  font-weight: 400;
+  opacity: .8;
+}
+.expertise .expertise-marquees .marquee__wrapper_content .outline{
+  -webkit-text-stroke: 1.5px var(--ink);
+  color: transparent !important;
+  text-shadow: none !important;
+}
+

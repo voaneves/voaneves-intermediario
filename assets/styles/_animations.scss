@@ -231,3 +231,102 @@
     clip: rect(31px, 9999px, 149px, 0);
   }
 }
+
+// =============================================================================
+
+// =============================================================================
+// Extracted from playful.css during Fase 2 (no class renames, only code motion).
+// =============================================================================
+/* =============================================================
+ * 3.  HERO — massive name reveal + photo
+ * ============================================================= */
+.pf-letter{
+  display: inline-block;
+  transform: translate3d(0, 110%, 0);
+  transition: transform 1s cubic-bezier(.22,.61,.36,1);
+  will-change: transform;
+}
+.pf-letter.in{ transform: translate3d(0, 0, 0); }
+
+@keyframes pfPulse{ 0%,100%{ opacity: 1; } 50%{ opacity: .35; } }
+
+/* =============================================================
+ * 13.  PARTY MODE
+ * ============================================================= */
+@keyframes pfPartyHue{
+  0%,100%{ filter: hue-rotate(0deg) saturate(1.6); }
+  50%{ filter: hue-rotate(180deg) saturate(2); }
+}
+
+/* =============================================================
+ * Gravity / spring — entrance animations + button release
+ * ============================================================= */
+.cta, .bento__item .call-to-action, .contact__email-btn,
+.utility-btn, .timeline__card, .stat{
+  transition-timing-function: cubic-bezier(.34,1.56,.64,1) !important;
+}
+.cta:active, .bento__item .call-to-action:active{
+  transform: scale(.94);
+  transition: transform .12s ease-out !important;
+}
+.v4 .utility-btn .dropdown{
+  position: absolute !important;
+  top: calc(100% + 12px) !important;
+  right: 0 !important;
+  left: auto !important;
+  background: #fff !important;
+  color: var(--ink) !important;
+  border-radius: 14px !important;
+  padding: 6px !important;
+  min-width: 96px !important;
+  box-shadow: 0 18px 40px -12px rgba(0,0,0,.35),
+              0 0 0 1px rgba(0,0,0,.06) !important;
+  list-style: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) !important;
+  transition: transform .25s cubic-bezier(.22,.61,.36,1),
+              opacity .2s ease, visibility 0s .25s !important;
+}
+.v4 button:has(.dropdown):hover .dropdown,
+.v4 .utility-btn:focus-within .dropdown,
+.v4 .utility-btn:hover .dropdown{
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+  transition: transform .35s cubic-bezier(.22,.61,.36,1),
+              opacity .25s ease, visibility 0s !important;
+}
+.v4 .utility-btn .dropdown::before,
+.v4 .utility-btn .dropdown::after,
+.v4 button:has(.dropdown)::after{
+  display: none !important;
+  content: none !important;
+}
+.v4 .utility-btn .dropdown li{
+  height: auto !important;
+  width: auto !important;
+  position: relative !important;
+  padding: 0 !important;
+}
+.v4 .utility-btn .dropdown a{
+  display: block !important;
+  padding: 9px 14px !important;
+  border-bottom: none !important;
+  border-radius: 8px !important;
+  font-family: var(--font-mono);
+  font-size: .72rem !important;
+  letter-spacing: .15em !important;
+  text-transform: uppercase;
+  color: var(--ink) !important;
+  transition: background .2s, color .2s;
+}
+.v4 .utility-btn .dropdown a:hover{
+  background: var(--cream-soft) !important;
+  color: var(--signal) !important;
+}
+
+@media (hover: none){
+.timeline__hint{ display: none; }
+}
+
