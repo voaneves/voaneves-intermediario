@@ -1,3 +1,5 @@
+@use "include" as *;
+
 /* Sidebar */
 .sidebar {
   @include flex-center;

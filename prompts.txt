@@ -1,0 +1,29 @@
+Prompt 1: Fixing the @import Deprecation
+Use this prompt to migrate to the modern Sass module system.
+
+text
+Please update my SCSS files to migrate from the deprecated `@import` syntax to the modern `@use` and `@forward` module system. 
+Specifically, in `assets/styles/styles.scss`, replace the following imports:
+- `@import "include";`
+- `@import "tokens";`
+- `@import "theme";`
+- `@import "header";`
+- `@import "sidebar";`
+Please replace them with `@use` (or `@forward` if necessary). Also, please ensure that any variables, mixins, or functions that rely on these files are updated to use the correct namespaces introduced by `@use`.
+Prompt 2: Fixing the Division / Deprecation
+Use this prompt to fix the division warnings in your _include.scss file.
+
+text
+Please refactor my SCSS files to resolve the deprecation warning for using `/` for division outside of `calc()`. 
+Specifically, look at `assets/styles/_include.scss` around lines 197 and 198:
+- `$min-rem: $min-px / 16;`
+- `$max-rem: $max-px / 16;`
+Please update these lines to use the modern `math.div()` function. Make sure to include `@use "sass:math";` at the top of the file if it isn't there already.
+Prompt 3: Fixing the darken() Color Function Deprecation
+Use this prompt to update the legacy global color functions to the modern color module.
+
+text
+Please update the deprecated global built-in color functions in my SCSS code. 
+Specifically, in `assets/styles/styles.scss` around lines 196-198, there are multiple instances of the `darken()` function being used in a `text-shadow` property (e.g., `darken(white, 50%)`, `darken(white, 52%)`, etc.).
+Please replace all instances of `darken()` with the modern equivalent using `color.scale($color, $lightness: -X%)` or `color.adjust($color, $lightness: -X%)`. Make sure to add `@use "sass:color";` at the top of the `styles.scss` file so the module is correctly imported.
+Tip: If you'd like me to go ahead and apply these fixes for you right now, just let me know and I can execute these changes in your workspace!

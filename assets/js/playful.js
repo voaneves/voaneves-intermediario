@@ -1241,9 +1241,9 @@
     // CSS classes were renamed to BEM during Fase 3 of the unification (was "v4-v4-" prefix doubled
     // namespace). Fall back to the single-prefix selector so older markup
     // keeps working.
-    var cutout = photo.querySelector(".hero__cutout, .hero__cutout");
+    var cutout = photo.querySelector(".hero__cutout");
     var orb    = photo.querySelector(".hero__orb");
-    var chips  = photo.querySelectorAll(".hero__chip, .hero__chip");
+    var chips  = photo.querySelectorAll(".hero__chip");
 
     setTimeout(function () { photo.classList.add("is-revealed"); }, 220);
 
@@ -1436,7 +1436,7 @@
     var photo  = document.querySelector(".hero__photo");
     if (!photo) return;
     var img    = photo.querySelector(".hero__img");
-    var cutout = photo.querySelector(".hero__cutout, .hero__cutout");
+    var cutout = photo.querySelector(".hero__cutout");
     if (!img || !cutout) return;
     if (prefersReduced || isTouch || !canHover) return;
 

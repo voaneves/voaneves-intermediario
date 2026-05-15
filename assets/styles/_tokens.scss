@@ -1,23 +1,25 @@
 // =============================================================================
 // Design tokens — single source of truth for colors, type, spacing, layout.
 //
-// This file is the first piece of the unified architecture (Fase 1 do plano).
-// It loads BEFORE every other partial that may consume these custom
-// properties. The legacy `--color-*` tokens still live in _header.scss for
-// now — they will be folded in during Fase 5 (limpeza do legado).
+// Three logical groups:
 //
-// playful.css continues to re-declare the same tokens at runtime; because it
-// is preloaded AFTER styles.css, its values override these. That is the
-// intended cascade during Fase 1 — visual output remains identical and the
-// new partial only serves as a documented inventory. Removing the duplicate
-// declaration in playful.css is the job of Fase 2.
+//   1. v4 design tokens — `--ink`, `--cream`, `--signal`, `--pad-x`, `--pad-y`,
+//      and the accent/line tokens. These are the "modern" tokens consumed by
+//      every partial extracted from playful.css. Theme swap (system + user
+//      toggle) is owned by `_theme.scss`.
 //
-// Layers (in declaration order):
-//   1. Typography family stack
-//   2. Core palette (semantic mapping happens in _theme.scss)
-//   3. Accent palette (decorative hues used by the hero, stats, etc.)
-//   4. Line / border tokens
-//   5. Layout spacing
+//   2. Typography family stack (font-display, font-mono, font-condensed).
+//      Loaded here because they're palette-adjacent and used across the site.
+//
+//   3. Legacy `--color-*` palette — consolidated here during Fase 5 of the
+//      migration plan. Originally scattered across four blocks in
+//      `_header.scss` (the base, two @media for system theme, plus
+//      .light-mode / .dark-mode user overrides). Now centralized: the base
+//      values live in `:root`, the theme overrides live in their own blocks
+//      at the bottom of this file. Active consumers: cursor, dropdown,
+//      sidebar, tooltip, scroll-icon, page-settings, plus dead legacy-inline
+//      rules. Future migration should replace each `var(--color-foo)` call
+//      site with the appropriate v4 token and then delete the legacy block.
 // =============================================================================
 
 :root {
@@ -27,7 +29,7 @@
                     "Arial Narrow", Impact, sans-serif-condensed, sans-serif;
   --font-mono:      ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
 
-  /* -- Core palette ------------------------------------------------------ */
+  /* -- Core palette (v4) -------------------------------------------------- */
   /* Consumed by every modern section. Theme layer (_theme.scss) swaps these
      per system preference and explicit user toggle. Section-level palette
      routing via [data-section-bg="..."] resolves through these tokens. */
@@ -38,7 +40,7 @@
   --signal:     #f50000;  /* accent / CTA red                         */
   --signal-2:   #ff2a2a;  /* hot accent (hover, indicators)           */
 
-  /* -- Accent palette ---------------------------------------------------- */
+  /* -- Accent palette (v4) ----------------------------------------------- */
   /* Decorative hues used by stats, hero aurora blobs, illustrative chips. */
   --hue-orange: #ff6b35;
   --hue-pink:   #ff5d9e;
@@ -46,14 +48,82 @@
   --hue-yellow: #f3c043;
   --maroon:     #2a0e0e;
 
-  /* -- Lines / borders --------------------------------------------------- */
-  --line:         rgba(0, 0, 0, 0.12);   /* hairlines on light surfaces */
-  --line-on-dark: rgba(255, 255, 255, 0.14); /* hairlines on dark surfaces */
+  /* -- Lines / borders (v4) ---------------------------------------------- */
+  --line:         rgba(0, 0, 0, 0.12);
+  --line-on-dark: rgba(255, 255, 255, 0.14);
 
-  /* -- Layout spacing ---------------------------------------------------- */
-  /* Section padding — fluid horizontal gutters and vertical rhythm.
-     --pad-x grows from 20px (mobile) to 64px (desktop).
-     --pad-y grows from 60px to 140px. */
+  /* -- Layout spacing (v4) ----------------------------------------------- */
   --pad-x: clamp(20px, 4vw, 64px);
   --pad-y: clamp(60px, 10vh, 140px);
+
+  /* -- Legacy palette (consolidated from _header.scss) ------------------- */
+  /* `--color-secondary` aliased to `--signal` so the brand red lives in one
+     place. `--color-primary` and `--color-white` keep their literal values
+     because legacy semantics ("background" vs "text") differ from v4 (where
+     each element picks its own color contextually). Light/dark swaps for
+     the rest live in the override blocks at the bottom of this file. */
+  --color-primary:   #0a0a0a;
+  --color-secondary: var(--signal);
+  --color-white:     #fff;
+  --color-white-2:   #fff;
+  --color-black:     #000;
+  --color-black-2:   #fff;
+  --color-grey-0:    #f8f8f8;
+  --color-grey-1:    #dbe1e8;
+  --color-grey-2:    #b2becd;
+  --color-grey-3:    #6c7983;
+  --color-grey-4:    #454e56;
+  --color-grey-5:    #2a2e35;
+  --color-grey-6:    #12181b;
+  --color-opposite:  #976d0c;
+  --color-yellow:    #976d0c;
+}
+
+/* -- Legacy palette: system-light override --------------------------------- */
+/* When the system prefers light, the legacy palette flips its background +
+   text + greys + accent. (Note: `:not(.dark-mode)` lets a user explicit
+   dark-toggle win over the system preference.) */
+@media (prefers-color-scheme: light) {
+  :root:not(.dark-mode) {
+    --color-primary:  #fff;
+    --color-white:    #0a0a0a;
+    --color-black-2:  #000;
+    --color-grey-1:   #6c7983;
+    --color-grey-2:   #6c7983;
+    --color-grey-3:   #6c7983;
+    --color-grey-4:   #b2becd;
+    --color-grey-5:   #e8e8e8;
+    --color-grey-6:   #b2becd;
+    --color-opposite: #edad19;
+  }
+}
+
+/* -- Legacy palette: explicit user toggle to light ------------------------ */
+.light-mode {
+  --color-primary:  #fff;
+  --color-white:    #0a0a0a;
+  --color-black-2:  #000;
+  --color-grey-1:   #6c7983;
+  --color-grey-2:   #6c7983;
+  --color-grey-3:   #6c7983;
+  --color-grey-4:   #b2becd;
+  --color-grey-5:   #e8e8e8;
+  --color-grey-6:   #b2becd;
+  --color-opposite: #edad19;
+}
+
+/* -- Legacy palette: explicit user toggle to dark ------------------------- */
+/* Re-asserts the dark values so a user-explicit dark toggle on a light OS
+   gets the same legacy palette they'd get on a dark OS. */
+.dark-mode {
+  --color-primary:  #0a0a0a;
+  --color-white:    #fff;
+  --color-black-2:  #fff;
+  --color-grey-1:   #dbe1e8;
+  --color-grey-2:   #b2becd;
+  --color-grey-3:   #6c7983;
+  --color-grey-4:   #454e56;
+  --color-grey-5:   #2a2e35;
+  --color-grey-6:   #12181b;
+  --color-opposite: #976d0c;
 }

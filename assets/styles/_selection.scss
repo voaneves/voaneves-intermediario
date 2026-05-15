@@ -1,3 +1,7 @@
+::-moz-selection {
+  color: white;
+  background: var(--color-opposite);
+}
 ::selection {
   color: white;
   background: var(--color-opposite);

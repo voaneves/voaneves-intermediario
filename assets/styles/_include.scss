@@ -1,3 +1,18 @@
+// Sass built-in math module — required for `math.div()`, the modern
+// replacement for the `/` division operator (deprecated in Dart Sass 1.33+
+// and slated for removal in 2.0). The `/` token now exclusively means CSS
+// list separation (as in `font: 16px / 1.5`); arithmetic must go through
+// `math.div($a, $b)`.
+@use "sass:math";
+
+// Sass built-in map module — exposes `map.get()`, `map.has-key()`,
+// `map.keys()`, `map.merge()`, etc. The global versions (`map-get`,
+// `map-has-key`, `map-keys`) are deprecated in Dart Sass 1.33+ and will
+// be removed in 2.0. The responsive mixins below (`respond-to`,
+// `respond-from`, `respond-between`) consume the `$breakpoints` map and
+// should be migrated to the namespaced calls in a follow-up.
+@use "sass:map";
+
 @mixin inline-block-center {
   @include inline-block;
   @include align-items;
@@ -121,10 +136,10 @@ $breakpoints: (
 //   }
 //
 @mixin respond-to($name) {
-  @if not map-has-key($breakpoints, $name) {
+  @if not map.has-key($breakpoints, $name) {
     @warn "respond-to: unknown breakpoint `#{$name}`. Available: #{map-keys($breakpoints)}.";
   } @else {
-    @media screen and (max-width: map-get($breakpoints, $name)) {
+    @media screen and (max-width: map.get($breakpoints, $name)) {
       @content;
     }
   }
@@ -174,7 +189,7 @@ $breakpoints: (
 //   strip-unit(1.5rem) → 1.5
 //
 @function strip-unit($value) {
-  @return $value / ($value * 0 + 1);
+  @return math.div($value, ($value * 0 + 1));
 }
 
 // Linear-interpolated responsive size.
@@ -195,8 +210,8 @@ $breakpoints: (
 //   across the WHOLE phone-to-desktop range.
 //
 @function fluid($min-px, $max-px, $min-vw: 320, $max-vw: 1200) {
-  $min-rem:    $min-px / 16;
-  $max-rem:    $max-px / 16;
+  $min-rem:    math.div($min-px, 16);
+  $max-rem:    math.div($max-px, 16);
   $size-delta: $max-px - $min-px;
   $vw-delta:   $max-vw - $min-vw;
 

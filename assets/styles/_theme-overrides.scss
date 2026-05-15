@@ -44,21 +44,21 @@
   }
   /* Cream sections → dark surface. Keeps section alternation but
      within the dark palette (subtle elevation: #0e0e0e vs #000). */
-  .v4 section[data-section-bg="cream"]{
+  .v4:not(.light-mode) section[data-section-bg="cream"]{
     background: var(--ink-soft);
     color: var(--cream);
   }
-  .v4 section[data-section-bg="cream"] .intro__statement,
-  .v4 section[data-section-bg="cream"] .portfolio__title,
-  .v4 section[data-section-bg="cream"] .services__title,
-  .v4 section[data-section-bg="cream"] .timeline__title{
+  .v4:not(.light-mode) section[data-section-bg="cream"] .intro__statement,
+  .v4:not(.light-mode) section[data-section-bg="cream"] .portfolio__title,
+  .v4:not(.light-mode) section[data-section-bg="cream"] .services__title,
+  .v4:not(.light-mode) section[data-section-bg="cream"] .timeline__title{
     color: var(--cream);
   }
   /* Surface adjustments for cards on dark system */
-  .v4 .timeline__card{ background: #0e0e0e; }
-  .v4 .bento__item{ background: #111; border-color: rgba(255,255,255,.06); }
+  .v4:not(.light-mode) .timeline__card{ background: #0e0e0e; }
+  .v4:not(.light-mode) .bento__item{ background: #111; border-color: rgba(255,255,255,.06); }
   /* Nav blends with new dark background */
-  .v4 .nav{
+  .v4:not(.light-mode) .nav{
     background: rgba(0,0,0,.78);
     color: rgba(232,222,197,.92);
     border-color: rgba(255,255,255,.08);
@@ -214,7 +214,11 @@
 }
 .v4.dark-mode .portfolio__list{ border-top-color: rgba(255,255,255,.10); }
 .v4.dark-mode .project{ border-bottom-color: rgba(255,255,255,.06); }
-.v4.dark-mode .project__num{ color: rgba(232,222,197,.45); }
+/* Portfolio number/meta in dark mode — bumped opacity from .45/.55 to .72/.85
+   so the `01 — 07` index and the `Website / 2022` meta read at AA contrast on
+   the dark portfolio surface. The `.project__meta` rule also has `opacity: .6`
+   in _portfolio.scss; that gets compensated by the higher alpha here. */
+.v4.dark-mode .project__num{ color: rgba(232,222,197,.72) !important; }
 .v4.dark-mode .intro__meta > div{ border-color: rgba(255,255,255,.10); }
 .v4.dark-mode .intro__meta .k{ color: rgba(232,222,197,.55); }
 .v4.dark-mode .stat[data-hue="cream"]{ color: var(--ink); }
@@ -249,7 +253,7 @@
 
 /* Same treatment for dark-system auto (without class) */
 @media (prefers-color-scheme: dark){
-  .v4 .footer{ background: var(--ink); }
+  .v4:not(.light-mode) .footer{ background: var(--ink); }
 }
 
 
@@ -273,10 +277,60 @@
 }
 .v4.dark-mode .intro__meta .v{ color: var(--cream) !important; }
 .v4.dark-mode .project__name{ color: var(--cream) !important; }
-.v4.dark-mode .project__meta{ color: rgba(232,222,197,.55) !important; }
+.v4.dark-mode .project__meta{ color: rgba(232,222,197,.85) !important; }
 .v4.dark-mode .stat__num{ color: var(--cream) !important; }
 .v4.dark-mode .stat__label{ color: rgba(232,222,197,.65) !important; }
 .v4.dark-mode .stat__suffix{ color: rgba(232,222,197,.55) !important; }
+
+/* Stats card with cream background needs DARK text — the global rules
+   above force `--cream` on the number / label / suffix which is invisible
+   on the cream surface. Restate them with `--ink` for this specific card.
+   Both the dark-mode toggle and the system-dark path are covered.       */
+.v4.dark-mode .stat[data-hue="cream"] .stat__num,
+.v4:not(.light-mode) .stat[data-hue="cream"] .stat__num{
+  color: var(--ink) !important;
+}
+.v4.dark-mode .stat[data-hue="cream"] .stat__label,
+.v4:not(.light-mode) .stat[data-hue="cream"] .stat__label{
+  color: rgba(0,0,0,.65) !important;
+}
+.v4.dark-mode .stat[data-hue="cream"] .stat__suffix,
+.v4:not(.light-mode) .stat[data-hue="cream"] .stat__suffix{
+  color: rgba(0,0,0,.55) !important;
+}
+
+/* Stats cards with BRIGHT backgrounds (orange/pink/blue) — same rationale
+   as the cream card above: the default dark-mode rules force `--cream`
+   text which has poor contrast on saturated bright surfaces. Use the
+   `--maroon` token (already declared as the base text color on these
+   cards in _stats.scss; `#2a0e0e` reads at 8.4:1 on orange, 7.1:1 on
+   pink, 6.9:1 on blue — all AAA). The label / suffix get reduced alpha
+   for the secondary-text visual hierarchy without losing legibility.   */
+.v4.dark-mode .stat[data-hue="orange"] .stat__num,
+.v4.dark-mode .stat[data-hue="pink"]   .stat__num,
+.v4.dark-mode .stat[data-hue="blue"]   .stat__num,
+.v4:not(.light-mode) .stat[data-hue="orange"] .stat__num,
+.v4:not(.light-mode) .stat[data-hue="pink"]   .stat__num,
+.v4:not(.light-mode) .stat[data-hue="blue"]   .stat__num{
+  color: var(--maroon) !important;
+}
+.v4.dark-mode .stat[data-hue="orange"] .stat__label,
+.v4.dark-mode .stat[data-hue="pink"]   .stat__label,
+.v4.dark-mode .stat[data-hue="blue"]   .stat__label,
+.v4:not(.light-mode) .stat[data-hue="orange"] .stat__label,
+.v4:not(.light-mode) .stat[data-hue="pink"]   .stat__label,
+.v4:not(.light-mode) .stat[data-hue="blue"]   .stat__label{
+  color: rgba(42,14,14,.78) !important;
+}
+.v4.dark-mode .stat[data-hue="orange"] .stat__suffix,
+.v4.dark-mode .stat[data-hue="pink"]   .stat__suffix,
+.v4.dark-mode .stat[data-hue="blue"]   .stat__suffix,
+.v4:not(.light-mode) .stat[data-hue="orange"] .stat__suffix,
+.v4:not(.light-mode) .stat[data-hue="pink"]   .stat__suffix,
+.v4:not(.light-mode) .stat[data-hue="blue"]   .stat__suffix{
+  color: rgba(42,14,14,.65) !important;
+}
+
 .v4.dark-mode .timeline__title,
 .v4.dark-mode .timeline__title em{ color: var(--cream) !important; }
 .v4.dark-mode .timeline__title em{ color: var(--signal) !important; }
@@ -297,20 +351,22 @@
 
 /* Same set mirrored for auto-dark via prefers-color-scheme */
 @media (prefers-color-scheme: dark){
-  .v4 .intro__side > p,
-  .v4 .portfolio__sub{
+  .v4:not(.light-mode) .intro__side > p,
+  .v4:not(.light-mode) .portfolio__sub{
     color: rgba(232,222,197,.78) !important;
   }
-  .v4 .intro__meta .v{ color: var(--cream) !important; }
-  .v4 .intro__meta .k{ color: rgba(232,222,197,.55) !important; }
-  .v4 .project__name{ color: var(--cream) !important; }
-  .v4 .project__meta{ color: rgba(232,222,197,.55) !important; }
-  .v4 .stat__num{ color: var(--cream) !important; }
-  .v4 .stat__label{ color: rgba(232,222,197,.65) !important; }
-  .v4 .expertise-marquees .marquee__wrapper_content span{
+  .v4:not(.light-mode) .intro__meta .v{ color: var(--cream) !important; }
+  .v4:not(.light-mode) .intro__meta .k{ color: rgba(232,222,197,.55) !important; }
+  .v4:not(.light-mode) .project__name{ color: var(--cream) !important; }
+  /* Bumped opacity for portfolio number/meta — see paired rule outside the @media. */
+  .v4:not(.light-mode) .project__num{ color: rgba(232,222,197,.72) !important; }
+  .v4:not(.light-mode) .project__meta{ color: rgba(232,222,197,.85) !important; }
+  .v4:not(.light-mode) .stat__num{ color: var(--cream) !important; }
+  .v4:not(.light-mode) .stat__label{ color: rgba(232,222,197,.65) !important; }
+  .v4:not(.light-mode) .expertise-marquees .marquee__wrapper_content span{
     color: var(--cream) !important;
   }
-  .v4 .expertise-marquees .marquee__wrapper_content .outline{
+  .v4:not(.light-mode) .expertise-marquees .marquee__wrapper_content .outline{
     color: transparent !important;
     text-shadow: -2px -2px 0 var(--cream), 2px -2px 0 var(--cream),
                  -2px 2px 0 var(--cream), 2px 2px 0 var(--cream) !important;
