@@ -81,9 +81,21 @@
 .timeline__card .card__image{
   position: absolute !important; inset: 0 !important;
   width: 100% !important; height: 100% !important;
+  /* Skeleton shimmer while the logo image bytes load. Covered by the
+     <img> via object-fit:cover. See _animations.scss for the keyframes. */
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,.03) 0%,
+    rgba(255,255,255,.08) 50%,
+    rgba(255,255,255,.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
 }
 .timeline__card .card__image img{
   width: 100% !important; height: 100% !important;
+  /* aspect-ratio matches all company logos (330×180 source webps). */
+  aspect-ratio: 330 / 180;
   object-fit: cover; object-position: center;
   border-radius: 0 !important;
   filter: brightness(.42) saturate(.5);

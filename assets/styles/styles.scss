@@ -38,7 +38,6 @@
 
 // — Legacy partials
 @use "header";
-@use "sidebar";
 @use "cursor";
 @use "independent-components";
 @use "scrollbar";
@@ -49,8 +48,9 @@
 @use "animations";
 @use "selection";
 
-// — Legacy inline blocks (extracted from this file's body)
-@use "legacy-inline";
+// — Legacy inline blocks — fully dissolved into section partials during Fase 9.
+//   _legacy-inline.scss no longer exists; its content moved to _expertise (none —
+//   shadowed), _contact, _footer, _reset, _services. See git history for the trail.
 
 // — Fase 2 partials extracted from playful.css
 @use "reset";
@@ -66,5 +66,4 @@
 @use "services";
 @use "contact";
 @use "footer";
-@use "legacy";
 @use "theme-overrides";

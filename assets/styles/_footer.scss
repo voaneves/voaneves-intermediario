@@ -51,3 +51,18 @@
   .footer__meta{ justify-self: start; }
 }
 
+
+
+/* ────────────────────────────────────────────────────────────────────────
+   Legacy `footer` tag-selector rules — folded in here during Fase 9.
+   The .footer BEM rule above already sets bg / color / padding (with class
+   specificity 0,1,0 which always beats this tag's 0,0,1). What this block
+   adds are the two properties .footer doesn't set: `text-align: center`
+   (redundant given the explicit grid + justify-self, but kept for safety)
+   and `font-weight: light` (CSS "light" is invalid → resolves to "normal"
+   in browsers; harmless legacy artifact left for reference).
+   ──────────────────────────────────────────────────────────────────────── */
+footer {
+  text-align: center;
+  font-weight: light;
+}

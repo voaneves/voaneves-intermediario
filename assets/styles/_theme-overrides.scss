@@ -101,14 +101,6 @@
   --signal-2:    #e62525;
   --line:        rgba(0,0,0,.10);
   --line-on-dark: rgba(0,0,0,.10);
-  /* Sync with legacy palette from styles.css. The legacy
-     --color-white is named confusingly — it's the TEXT color, not
-     a literal white. In light context = near-black; in dark = white.
-     Forcing it here makes legacy elements (marquees, body text in
-     styles.css) follow the explicit toggle, not the system. */
-  --color-white: #0a0a0a;
-  --color-primary: #fcfcf8;
-  --color-secondary: #c41a1a;
 }
 /* Convert ALL section backgrounds (except hero) to light surfaces.
    The hero stays cinematic dark — it's the brand moment where the
@@ -186,12 +178,6 @@
   --signal-2:    #ff5a5a;
   --line:        rgba(255,255,255,.12);
   --line-on-dark: rgba(255,255,255,.12);
-  /* Sync legacy palette — see comment in .v4.light-mode above.
-     Without these, marquees and other styles.css-driven elements
-     keep their light-system color even when the user toggles dark. */
-  --color-white: #e8dec5;
-  --color-primary: #000000;
-  --color-secondary: #ff3838;
 
   background: var(--ink) !important;
   color: var(--cream) !important;

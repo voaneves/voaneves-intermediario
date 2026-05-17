@@ -176,15 +176,15 @@
 @keyframes neon {
   from {
     text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff,
-      0 0 40px var(--color-secondary), 0 0 70px var(--color-secondary),
-      0 0 80px var(--color-secondary), 0 0 100px var(--color-secondary),
-      0 0 150px var(--color-secondary);
+      0 0 40px var(--signal), 0 0 70px var(--signal),
+      0 0 80px var(--signal), 0 0 100px var(--signal),
+      0 0 150px var(--signal);
   }
   to {
     text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff,
-      0 0 20px var(--color-secondary), 0 0 35px var(--color-secondary),
-      0 0 40px var(--color-secondary), 0 0 50px var(--color-secondary),
-      0 0 75px var(--color-secondary);
+      0 0 20px var(--signal), 0 0 35px var(--signal),
+      0 0 40px var(--signal), 0 0 50px var(--signal),
+      0 0 75px var(--signal);
   }
 }
 @keyframes glitch-loop-1 {
@@ -330,3 +330,37 @@
 .timeline__hint{ display: none; }
 }
 
+/* ────────────────────────────────────────────────────────────────────
+   Skeleton screen utility — shimmer placeholder for image containers
+   while the photo bytes are still downloading. The pattern: parent has
+   `.skeleton` (or includes its declarations); child <img> sits on top
+   with `object-fit: cover` so it visually replaces the skeleton when
+   loaded. No JS needed; the animation runs harmlessly behind the
+   image after load.
+
+   Performance: uses `background-position` animation which is GPU-
+   accelerated and doesn't trigger layout. The `prefers-reduced-motion`
+   media query downgrades to a flat tone for users who opted out.
+   ──────────────────────────────────────────────────────────────────── */
+@keyframes skeleton-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,.03) 0%,
+    rgba(255,255,255,.08) 50%,
+    rgba(255,255,255,.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    background: rgba(255,255,255,.04);
+    animation: none;
+  }
+}

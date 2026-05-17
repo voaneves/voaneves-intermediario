@@ -545,3 +545,520 @@ Build do Sass roda limpo, sem warnings críticos.
 Quando você der o sinal verde para iniciar, **a primeira sessão de trabalho** é a Fase 1: criar `_tokens.scss` e `_theme.scss`, refatorar `styles.scss` para importá-los, validar que o site renderiza igual.
 
 Esse é o passo de menor risco e maior valor de aprendizado: você entende como o cascade vai se comportar quando começarmos a remover arquivos. Se Fase 1 funcionar limpa, as outras fases são mais variações do mesmo método.
+
+---
+
+## 13. Status pós-migração inicial (Fases 1-6 concluídas)
+
+As seis fases originais foram executadas e commitadas. Resumo do estado atual e do que restou para refatorações incrementais:
+
+**Concluído.** Tokens v4 (`--ink`, `--cream`, `--signal`) e tema light/dark/system centralizados. `playful.css` (93KB) extraído em 14 parciais SCSS. Renomeação BEM completa (119 classes `v4-foo` → `foo__bar` em SCSS, HTML, JS). JS validado e re-minificado. Cleanup do legado: 6 blocos top-level mortos do `_legacy-inline.scss` removidos (`-83%`), `playful.css` truncado, inline `<style>` do `index.html` reduzido (`-58%`), palette `--color-*` consolidada em `_tokens.scss`. README documentado com arquitetura, BEM, tokens, tema, build commands.
+
+**Acrescido fora do plano original.** Migração `@import` → `@use`/`@forward` completa, eliminando o deprecation warning oficial do Sass 1.80+. `darken()` → `color.scale()` (22 sites). `/` division → `math.div()` (3 sites). `map-*` globais → `map.*` namespaced (2 de 9 sites, parcial). Bug fix crítico: `@media (prefers-color-scheme: dark)` agora respeita `.light-mode` toggle via `:not(.light-mode)` qualifier (32 selectors patcheados). Bug fixes de contraste: stats cards (cream + bright orange/pink/blue) com texto escuro WCAG AAA, portfolio numbers/meta com opacity calibrada. Restauração de `min-height: 100vh` por seção para sensação imersiva.
+
+**Métricas finais.** CSS ungzipped: 135.6KB → 80.9KB (`-40%`). Gzipped: ~22KB → 15.3KB (`-30%`). Selectors únicos: 757 → 643 (`-15%`). HTTP requests para CSS: 2 → 1. Deprecation warnings: 2 → 0. Build Sass: ~1.4s média (3 runs).
+
+**Itens ainda transitórios que não bloqueiam estabilidade.** Palette `--color-*` ainda consumida por ~60 call sites em parciais ativos (cursor, dropdown, sidebar, tooltip, scroll-icon, social-icons, toast, page-settings, independent-components, header body/section rules). `_legacy-inline.scss` mantém 193 linhas em 5 blocos genuinamente alive (`.expertise &-marquees`, `.contact-content` wrapper, `footer` tag rule, `.hidden`/`.show` utilities, responsive overrides do `.services .bento`). 7 chamadas `map-*` globais ainda no `_include.scss` (`respond-from` e `respond-between`). `playful.css` é 0 bytes mas arquivo físico permanece. `_legacy.scss` mantém `.mesh-rings`/`.mesh-scan` (visual easter eggs sem uso atual).
+
+A partir daqui o trabalho é incremental e desacoplado. Cada fase abaixo pode ser executada isoladamente sem dependência das outras; a ordem é apenas sugestão por risco crescente.
+
+---
+
+## 14. Fase 7 — Migração final de `map-*` globais (baixo risco, mecânico)
+
+Migra as 7 chamadas restantes das funções globais `map-has-key`, `map-keys`, `map-get` para a sintaxe namespaced `map.has-key`, `map.keys`, `map.get` do módulo built-in `sass:map`. O módulo já está importado em `_include.scss` desde a fase de migração ad-hoc.
+
+**Sites a tocar.** Todos em `assets/styles/_include.scss`:
+
+- Linha 140: `map-keys($breakpoints)` dentro do `@warn` do `respond-to` (single call).
+- Linha 158: `map-has-key($breakpoints, $name)` no `@if` do `respond-from`.
+- Linha 159: `map-keys($breakpoints)` no `@warn` do `respond-from`.
+- Linha 161: `map-get($breakpoints, $name)` no `@media` do `respond-from`.
+- Linha 172: `map-has-key($breakpoints, $from) or not map-has-key($breakpoints, $to)` no `@if` do `respond-between` (duas calls).
+- Linha 176: `map-get($breakpoints, $from)` no `@media` do `respond-between`.
+- Linha 177: `map-get($breakpoints, $to)` no mesmo `@media`.
+
+**Procedimento.** Substituição mecânica `map-X(` → `map.X(` em cada linha. Compilação Sass valida que o output é idêntico ao byte (as funções built-in resolvem para o mesmo valor — só a sintaxe é diferente). Zero risco de regressão visual.
+
+**Validação.** Build limpo, zero deprecation warnings. `styles.css` byte-idêntico ao baseline pré-fase.
+
+**Reverter.** Trivial — `git checkout assets/styles/_include.scss`.
+
+**Estimativa.** 15-20 minutos.
+
+---
+
+## 15. Fase 8 — Migração dos consumers de `--color-*` para tokens v4 (médio risco, requer mapeamento)
+
+Migra as ~60 chamadas `var(--color-foo)` espalhadas pelos parciais ativos para os tokens v4 equivalentes (`--ink`, `--cream`, `--signal`, etc.). Permite remover a seção legada `--color-*` do `_tokens.scss` ao final.
+
+**Mapeamento semântico.** Não é 1:1 — alguns tokens legados têm semântica contextual:
+
+- `--color-secondary` → `--signal`. Já está aliado em `_tokens.scss` (`--color-secondary: var(--signal)`). Substituição literal nos call sites.
+- `--color-primary` (legacy "background" — dark em dark theme, white em light) → não tem token v4 direto. Cada call site decide: se for body bg, usar `var(--cream)` (body.v4 já faz isso). Se for sidebar/dropdown bg em surface escura, usar `var(--ink)`. Se for surface clara, `var(--cream)`. Decisão caso a caso.
+- `--color-white` (legacy "text color" — white em dark, black em light) → contextual. Em surface escura usar `var(--cream)`, em clara usar `var(--ink)`. Quase sempre o consumer está num contexto onde a surface é conhecida.
+- `--color-white-2` (sempre `#fff`) → usar literal `#fff` ou criar novo token `--white`.
+- `--color-black` (sempre `#000`) → usar literal `#000` ou criar `--black`.
+- `--color-black-2` (white em dark, black em light) → contextual como `--color-white`.
+- `--color-grey-*` → essas têm valores muito específicos. Avaliar se ainda fazem sentido ou se podem mapear para variações de `--ink-soft`/`--cream-soft`. Provavelmente manter por valor.
+- `--color-opposite` (yellow accent, `#976d0c` em dark / `#edad19` em light) → criar `--accent-yellow` ou similar nos tokens v4.
+
+**Ordem de execução (por parcial).** Começar pelos arquivos com poucos call sites e ir para os maiores:
+
+1. `_scroll-icon.scss` (1-2 calls). Mais simples primeiro para calibrar o método.
+2. `_selection.scss` (1 call).
+3. `_dropdown.scss` (~3 calls).
+4. `_tooltip.scss` (~3 calls).
+5. `_social-icons.scss` (~2 calls).
+6. `_toast.scss` (~4 calls).
+7. `_cursor.scss` (~5 calls).
+8. `_independent-components.scss` (~6 calls).
+9. `_sidebar.scss` (~10 calls — depende do estado de uso do sidebar).
+10. `_page-settings.scss` (~5 calls).
+11. `_header.scss` — caso especial: body/section tag rules consomem `--color-primary` e `--color-white`. Reescrever as regras para usar `--cream` e `--ink` com fallback. Pode exigir adicionar a regra `body { background: var(--cream); color: var(--ink) }` se ainda não estiver coberta por `body.v4`.
+
+**Procedimento por arquivo.**
+
+a) Listar todas as `var(--color-*)` no arquivo.
+b) Para cada, decidir o token v4 equivalente baseado no contexto (background vs text vs border).
+c) Aplicar substituição.
+d) Compilar e abrir DevTools com aba "Computed" comparando o elemento antes/depois — confirmar que o valor resolvido é idêntico ou visualmente equivalente.
+e) Commit por parcial — facilita revert localizado se algo regredir.
+
+**Validação por fase.** Screenshot do site em dark+light por seção que o parcial afeta. Comparar com baseline pre-Fase-8. Diferenças aceitáveis são apenas mudanças intencionais (ex.: trocar grey-3 por ink-soft talvez tenha leve diferença de tom — decidir se manter o valor exato via `--ink-soft-50` ou aceitar a aproximação).
+
+**Encerramento da Fase 8.** Após todos os parciais migrados, deletar o bloco "Legacy palette" do `_tokens.scss` (linhas ~62-129). Confirmar zero referências `--color-*` no projeto inteiro: `grep -r "var(--color-" assets/` deve voltar zero hits. Recompilar e confirmar styles.css ainda renderiza correto.
+
+**Reverter.** Cada commit por parcial é revertable individualmente.
+
+**Estimativa.** 3-5 horas distribuídas (não fazer numa sessão só — fadiga visual prejudica audit).
+
+---
+
+## 16. Fase 9 — Dissolução do `_legacy-inline.scss`
+
+Move os 5 blocos sobreviventes do `_legacy-inline.scss` para os section partials onde eles conceitualmente pertencem, e deleta o arquivo. Reduz o número de arquivos e elimina o conceito de "legacy inline" da arquitetura.
+
+**Migrações por bloco.**
+
+- **`.expertise &-marquees { ... }`** → mover para `_expertise.scss` (sem `&-marquees` que dependia do `&` do bloco pai; expandir para `.expertise-marquees { ... }` aninhado em `.expertise`).
+- **`.contact-content { padding-top: 3.5rem; background-color: #0a0a0a; .text {...}; .contact-icons .icon {...} }`** → mover para `_contact.scss`. O `.text` e `.contact-icons` ainda casam com markup atual. O `background-color: #0a0a0a` hardcoded deve virar `var(--ink)`.
+- **`footer { background-color: var(--color-white-2); padding: 1rem 0; text-align: center; ... }`** → mover para `_footer.scss` como regra tag (`footer { ... }`). Coexiste com `.footer { ... }` (especificidade tag < class, então `.footer` continua vencendo). Considerar consolidar com `.footer` BEM no mesmo arquivo.
+- **`.hidden { opacity: 0; visibility: hidden; ... }` e `.show { opacity: 1; ... }`** → mover para `_reset.scss` ou criar `_utilities.scss` se preferir um partial dedicado a utility classes.
+- **3 `@include respond-to("md/xs/lg") { ... }` blocks** → o `body { overflow-x: hidden }` em `lg` vai pro `_reset.scss`. Os dois blocks do `.services .bento` em `md` e `xs` vão pro `_services.scss` (já tem responsividade lá; consolidar).
+
+**Procedimento.** Por bloco: cortar do `_legacy-inline.scss`, colar no parcial destino com possíveis ajustes (descompor `&` aninhamento, substituir hardcoded por tokens). Compilar após cada move, confirmar `styles.css` byte-idêntico (compressor Sass deve produzir mesmo output).
+
+**Encerramento.** Após mover tudo, deletar `assets/styles/_legacy-inline.scss` e remover `@use "legacy-inline";` de `styles.scss`. Recompilar.
+
+**Validação.** Build limpo. Selectors no `styles.css` final mantêm a contagem (não perdemos nem ganhamos regras — só reorganizamos). Screenshot por seção confirma zero regressão.
+
+**Reverter.** Revert dos commits individuais por bloco.
+
+**Estimativa.** 1-2 horas.
+
+---
+
+## 17. Fase 10 — Auditoria e remoção de parciais legacy não usados
+
+Inspeciona cada um dos parciais "shared utilities" que sobreviveram da era pré-v4 e decide caso a caso: manter (se ainda no markup), refatorar (se em uso mas com código pesado), ou remover (se zero hits no markup).
+
+**Candidatos para audit.**
+
+- `_sidebar.scss` — implementa o sidebar lateral. Checar se ainda existe `<div class="sidebar">` no `index.html`. Provável: foi removido ou está oculto. Se confirmado dead, remover o partial inteiro e o `@use "sidebar"` no `styles.scss`.
+- `_independent-components.scss` — verificar o que define. Provável: `.main-btn`, `.btn-con`, e outras utility classes da era anterior. Auditar uso vs markup.
+- `_page-settings.scss` — pequeno (28 linhas?). Verificar o que estiliza.
+- `_scroll-icon.scss` — provavelmente styling para o `.scroll-tag` que foi removido do markup. Confirmar e remover se dead.
+- `_social-icons.scss` — define o icomoon font binding via `[class^=icon-]`. Crítico pois `<i class=icon-envelope-open>` ainda está no markup. Manter, mas verificar se há regras dead dentro.
+- `_toast.scss` — toast messages. `toast.js` ainda carregado, `<div class=msgbox-area>` no markup. Provavelmente alive.
+- `_dropdown.scss` — `<ul class=dropdown>` do translate menu ainda existe. Alive.
+- `_tooltip.scss` — `cursor-tooltip` no markup. Alive.
+- `_cursor.scss` — legacy `#cursor`/`#cursor-border` + v4 `.pf-cur`/`.pf-ring`. Alive.
+- `_legacy.scss` — visual easter eggs `.mesh-rings`/`.mesh-scan`. Sem uso atual no markup. Decidir: manter como referência arqueológica vs remover.
+
+**Procedimento.** Por arquivo:
+
+a) `grep -ro 'class.*<classes-do-partial>' index.html` para confirmar uso.
+b) Se zero hits, remover o `@use` em `styles.scss` e o arquivo `_foo.scss` físico.
+c) Se uso parcial, refatorar para manter só as regras vivas.
+d) Recompilar e validar.
+
+**Encerramento.** Lista atualizada de parciais ativos no README seção 2.1 (Partial structure).
+
+**Validação.** `styles.css` final pode reduzir mais 5-15KB dependendo do que foi removido. Screenshot confirma zero regressão.
+
+**Reverter.** Commit por parcial revisado.
+
+**Estimativa.** 2-4 horas (depende de quantos forem realmente dead).
+
+---
+
+## 18. Fase 11 — Otimização do critical-path para FOUT/CLS zero
+
+Reorientação completa do escopo original. A versão anterior do plano sugeria "remover o `<style>` inline aceitando pequeno FOUC". **Errado** — o inline existe especificamente para prevenir FOUT (Flash of Unstyled Text) e CLS (Cumulative Layout Shift) que matam o Lighthouse score. A meta agora é o oposto: garantir que o inline contenha **exatamente** o que é necessário para layout estável no primeiro paint, eliminando FOUT/CLS sem inflar bytes.
+
+**Audit do estado atual.** Detectado em pre-Fase-11:
+
+  - **19 de 19 `<img>` SEM atributos `width`/`height`** — todos são CLS risk. Especial atenção à foto do hero (333×500) que é o primeiro elemento above-the-fold.
+  - **Timeline cards** com 11 imagens de logos (330×180 cada) — todas reservam 0×0 até CSS carregar.
+  - **Portfolio cards** com 7 imagens (1600×800 cada) escondidas em `<picture style="display:none">` — não contribuem CLS (display:none).
+  - **`@font-face icomoon`** com `font-display: block` (inline). Comportamento: ícones ficam invisíveis até 3 segundos enquanto fonte baixa. Aceitável para ícones (não há fallback semântico).
+  - **Google Fonts Fraunces** carregada via `<link rel=preload as=style onload="...">` pattern (Filament Group loadCSS). URL usa `&display=swap` — fallback aparece enquanto Fraunces baixa, depois swap. FOUT presente mas curto.
+
+**Estratégia de implementação.**
+
+A) **Adicionar `width` + `height` attributes em TODAS as `<img>`.** Mesmo quando o CSS define dimensões diferentes (`width: 100%; height: auto`), browsers modernos USAM os atributos HTML para calcular `aspect-ratio` implícito e reservar espaço no layout antes da imagem baixar. É a única solução efetiva para CLS de imagens. Sem isso, o navegador reserva 0×0 → imagem baixa → layout pula.
+
+  - Hero photo: `<img class="hero__img hero__img--primary" src="..." width="333" height="500">`
+  - Timeline logos: cada `<img>` ganha `width="330" height="180"`
+  - Portfolio images: continuam sem dimensão pois ficam em `<picture style="display:none">` — nada renderizado.
+
+B) **Garantir `aspect-ratio` no CSS dos containers** como cinto-e-suspensório. Adicionar `aspect-ratio: 333/500` (ou similar) nos `_hero.scss`, `_timeline.scss` para reservar espaço mesmo se o atributo HTML for ignorado por alguma razão.
+
+C) **Manter inline `<style>` com o subset crítico para layout above-the-fold**. Atualmente tem 2.334 bytes. Deve continuar contendo:
+
+  - **Tokens v4 cruciais** (`--ink`, `--cream`, `--signal`, `--pad-x`, `--pad-y`) + tema light/dark via `@media (prefers-color-scheme: ...)`. Sem isso, `var()` calls não resolvem antes do CSS carregar.
+  - **Reset universal** (`* { margin: 0; padding: 0; box-sizing: border-box }`).
+  - **`body`** background-color + color + font-family + font-size + font-weight. Previne flash branco se o tema for cream/dark.
+  - **`section { min-height: 100vh; width: 100% }`** — RESERVA espaço vertical de cada seção. Crítico para CLS — sem isso a página inteira pula quando CSS final carrega.
+  - **Hero layout crítico** (não presente atualmente):
+    - `.hero { min-height: 100dvh; padding: var(--pad-y) var(--pad-x) 0; display: flex; flex-direction: column; justify-content: flex-end }`
+    - `.hero__grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 4vw, 80px); align-items: center; flex: 1; padding-bottom: clamp(32px, 4vh, 60px) }`
+    - `.hero__photo { position: relative; height: clamp(360px, 58vh, 580px) }`
+    - `.hero__name { font-size: clamp(5.5rem, 13vw, 13rem); line-height: .88 }`
+  - **`@font-face icomoon`** + `[class^=icon-]` font binding — sem isso ícones de tema/translate na nav ficam invisíveis ou viram boxes.
+  - **`@keyframes marqueeLeft`** — marquee do hero precisa rolar imediatamente.
+  - **`.marquee` + wrapper rules** — reserva espaço para marquees acima da dobra.
+
+D) **`font-display` strategy.**
+  - `icomoon` continua `font-display: block`. Para ícones, é a escolha correta — não há fallback semântico aceitável (mostrar "" ou chars random é pior que esperar). Block timeout de 3s, depois fallback. Tipicamente icomoon baixa em <500ms então usuários nunca veem fallback.
+  - **Adicionar `<link rel=preload as=font>` para icomoon** — força o browser a baixar a fonte com prioridade alta, em paralelo com HTML parsing. Reduz tempo até ícones aparecerem de ~500ms para ~50ms.
+  - `Fraunces` mantém `display=swap`. Fallback `ui-serif` tem métricas razoavelmente similares — FOUT visível mas curto.
+  - **Considerar `font-display: optional`** para Fraunces se quisermos zero CLS — browser desiste se a fonte não baixar em 100ms (usuário em conexão lenta nunca vê Fraunces, mas zero shift).
+
+E) **Otimizar `<link rel=preload>` pattern** existente. O `onload='this.onload=null,this.rel="stylesheet"'` é JavaScript inline que muitos auditores marcam negativamente. Alternativa moderna:
+  ```html
+  <link rel=preload as=style href=... onload="this.rel='stylesheet'">
+  <noscript><link rel=stylesheet href=...></noscript>
+  ```
+  Ou ainda mais moderno (browsers modernos suportam):
+  ```html
+  <link rel=stylesheet href=... media=print onload="this.media='all'">
+  ```
+  Mas o pattern atual funciona — só polish opcional.
+
+F) **Validação pós-implementação.**
+  - **Lighthouse** (ou DevTools Performance tab): CLS deve ser **0**. LCP deve estar abaixo de 2.5s.
+  - **WebPageTest** ou **PageSpeed Insights**: confirmar zero "Largest Contentful Paint" jumps.
+  - **DevTools Network tab**: simular Slow 3G; observar que o hero não pula durante o load.
+  - **Visual regression**: comparar screenshots antes/depois — devem ser idênticos quando totalmente carregado.
+
+**Trade-offs aceitos.**
+
+- O inline `<style>` cresce de 2.334 bytes para ~3.500 bytes (adicionamos hero layout crítico). Tradeoff vale a pena: cada KB inline custa ~50ms na conexão mais lenta, mas economiza um CLS shift que custa pontos no Lighthouse.
+- Os `width`/`height` em `<img>` adicionam ~50 bytes ao HTML por imagem × 19 = ~1KB. Em troca: CLS=0 para todas as imagens.
+
+**Encerramento.** Fase 11 é considerada completa quando:
+  - `grep -c '<img[^>]\+\(width=\|height=\)' index.html` retorna 19+ (todas imagens com dimensões).
+  - Inline `<style>` contém tokens, reset, body, section, hero layout crítico, font-face icomoon, marquee base, @keyframes.
+  - Lighthouse Performance score = 100. CLS = 0.
+
+**Reverter.** Cada mudança é commit-isolada — revert por seção (HTML attributes vs inline style vs SCSS aspect-ratio).
+
+**Estimativa.** 2-3 horas (era 1h na versão original — escopo aumentado pelos requisitos de qualidade).
+
+---
+
+
+---
+
+## 19. Fase 12 — Final polishing (opcional, baixíssima prioridade)
+
+Items "would-be-nice" sem urgência:
+
+**Deletar `_legacy.scss`.** Visual easter eggs `.mesh-rings`/`.mesh-scan` que ninguém usa. Tirar do `styles.scss` e deletar o arquivo. Reduz ~1KB.
+
+**Deletar `playful.css`.** Arquivo físico em 0 bytes mas existe. `git rm` resolve. Plano não pode fazer no sandbox por permissões.
+
+**Remover a body class `.v4`.** Atualmente serve como ancorador de especificidade em vários seletores (`.v4 .hero`, `.v4:not(.light-mode) .stat`, etc.). Se removida, todos esses seletores perdem 1 nível de especificidade — podem entrar em conflito com seletores legados. Refator possível mas requer audit cuidadoso da cascade. Provavelmente manter `.v4` indefinidamente como flag inerte.
+
+**Sintaxe Sass moderna em todos os parciais.** Verificar se algum parcial ainda usa `@import` (não deve ter), `darken()` (zero), `lighten()` (zero), `/` arithmetic fora de calc (zero), `map-*` globais (7 ainda em `_include.scss`). Após Fase 7, tudo limpo.
+
+**Auditar `!important` count.** Atualmente 356 ocorrências (legado v4 cascade fight). Após eliminação completa do legacy palette + dissolução do `_legacy-inline.scss`, muitas dessas `!important` podem ser removidas (foram defensivas contra rules que não existem mais). Meta original do plano: <80 ocorrências.
+
+**Estimativa.** 1-3 horas total.
+
+---
+
+## 20. Critérios para encerrar definitivamente a migração
+
+A migração pode ser considerada "definitivamente fechada" quando:
+
+- `grep -r "v4-" assets/` retorna apenas matches em comentários históricos (zero referências funcionais).
+- `grep -r "var(--color-" assets/` retorna apenas matches no bloco "Legacy palette" do `_tokens.scss` que pode ser deletado.
+- `_legacy-inline.scss`, `_legacy.scss`, `playful.css` não existem no filesystem.
+- O `<style>` inline em `index.html` foi removido ou reduzido a ≤500 bytes de critical-path essencial.
+- Build Sass zero warnings, zero deprecations, em Dart Sass 2.0+.
+- `styles.css` compilado ≤70KB ungzipped, ≤13KB gzipped.
+- README documenta arquitetura final sem menção a "legacy" ou "transitional".
+- `!important` count <100 ocorrências (relaxando a meta original de <80 dado que mantemos compatibilidade com Sass module isolation).
+
+**Estimativa total para chegar lá a partir do estado atual.** Fase 7 (~20min) + Fase 8 (~4h) + Fase 9 (~1.5h) + Fase 10 (~3h) + Fase 11 (~1h) + Fase 12 (~2h) = **~12 horas** de trabalho concentrado, executável em 2-3 sessões de 4h cada ou ao longo de várias semanas com fases granulares.
+
+A ordem recomendada é Fase 7 → 9 → 10 → 8 → 11 → 12, porque cada fase reduz o escopo da próxima. Mas qualquer ordem funciona; as fases são desacopladas por design.
+
+---
+
+## 21. Inventário do JavaScript atual (baseline para a migração)
+
+Antes de detalhar as fases de remoção do `playful.js`, vale registrar o estado atual da camada JS para que o plano abaixo faça sentido.
+
+**Arquivos carregados pelo `index.html` (ordem de carregamento)**
+
+```
+sw.min.js              service worker registration (async)
+cursor.min.js          legacy custom cursor (#cursor / #cursor-border) (async)
+app.min.js             theme toggle + sidebar toggle + IntersectionObserver (async)
+console.min.js         easter-egg console.log messages (defer)
+toast.min.js           job-history modal popups (defer)
+playful.min.js         tudo do design v4: ~22 funções init*, ~66KB unminified (defer)
+```
+
+**Funções em `playful.js` (catalogadas)**
+
+`initCursor` (v4 cursor `.pf-cur`/`.pf-ring`/`.pf-label`/`.pf-img-preview`), `initMagnetic` (hover atrai elemento), `initHeroReveal` (letter-by-letter do nome do hero), `initSectionMode` (nav muda cor por `data-section-bg`), `initActiveNav` (IntersectionObserver para highlight do link), `initCounters` (count-up nos stats), `initWordReveal` (palavras slide-in), `initVelocityMarquee` (marquee acelera com scroll), `initScramble` (scramble text), `initDragScroll` (carousel horizontal drag), `initRipple` (ripple effect em CTAs), `initScrollBar` (progress indicator), `initSmoothNav` (smooth scroll), `initHeroAurora` (parallax + magnetismo dos chips), `initHeroBrushReveal` (canvas brush-reveal sobre a foto), `initHeroLiquid` (WebGL Navier-Stokes fluid simulation, ~1000 linhas, o que mais pesa), `initInfiniteSlider` (marquee infinita), `initImgPreview` (preview de imagem seguindo cursor), `initThemeMode` (toggle de tema via botão `#theme`), `initDrawer` (drawer mobile), `initSectionTagCounter` (numerador de seção), `initBadge` (badge rotativo seguindo cursor).
+
+**Sobreposições e conflitos identificados**
+
+`cursor.min.js` legado implementa `#cursor`/`#cursor-border` que está com `display: none` por CSS na arquitetura v4. Funcionalmente substituído por `initCursor()` em `playful.js`. **Remover `cursor.min.js` é seguro.**
+
+`app.min.js` implementa `toggleTheme()` que adiciona `.light-mode`/`.dark-mode` no body. `playful.js initThemeMode()` faz a mesma coisa com lógica ligeiramente diferente (transition animation, button feedback). **Decidir qual versão é autoritativa.**
+
+`app.min.js` tem IntersectionObserver para sections + `.active-btn` toggle. `playful.js initActiveNav()` tem a mesma lógica com pequenas variações. **Duplicação clara.**
+
+`app.min.js` tem `toggleSidebar()` para `.sidebar` legado. O design v4 não usa sidebar (usa drawer via `initDrawer()`). Se `.sidebar` estiver morto no markup, a função inteira é dead code.
+
+`app.min.js` tem observer para `.hidden`/`.show` elementos. `playful.js` não duplica isso — coexistem.
+
+`console.js` e `toast.js` são auto-contidos, sem sobreposição com outros arquivos. Manter como estão.
+
+**Estado-alvo desejável**
+
+Reduzir de 6 arquivos JS para 4: `app.min.js` (consolidado com tudo do `playful.js`), `console.min.js`, `toast.min.js`, `sw.min.js`. Eliminar `cursor.min.js` e `playful.min.js`. Total de bytes JS deve reduzir significativamente após remoção de duplicatas. O design v4 fica como **a** implementação (sem versões paralelas).
+
+---
+
+## 22. Fase 13 — Audit JS + consolidação de duplicatas (médio risco)
+
+Resolve as três sobreposições funcionais entre `app.js`, `cursor.js` e `playful.js` antes de tocar na estrutura modular. Sem isso, qualquer reorganização vira um pesadelo de cascade event-listener.
+
+**Sub-fase 13.1: Theme toggle.** Comparar `app.js#toggleTheme()` com `playful.js#initThemeMode()`. Critérios de decisão: qual versão lida melhor com transição (FOUC ao trocar tema), qual interage corretamente com o sistema OS preference (`window.matchMedia('(prefers-color-scheme: dark)')`), qual aplica state persistente (localStorage). Decisão recomendada: manter a versão `playful.js` (mais completa, com animação de toggle e correta interação com sistema). Em `app.js`, remover `toggleTheme()` e `initTheme()`. O event listener no `#theme` button passa a ser registrado APENAS em `playful.js`.
+
+**Sub-fase 13.2: Active-nav highlighting.** Mesmo padrão. Comparar `app.js#initEventHandlers()` (parte da IntersectionObserver) com `playful.js#initActiveNav()`. A versão `playful.js` usa `data-id` mais explicitamente. Manter `playful.js`. Em `app.js`, remover a parte do IntersectionObserver que toca `.active-btn` — mas MANTER a parte que observa `.hidden`/`.show` (esse comportamento não está em playful).
+
+**Sub-fase 13.3: Sidebar toggle.** Verificar se `<div class="sidebar">` ainda existe no markup ativo do `index.html`. Se zero hits, remover `toggleSidebar()` e o event listener correspondente de `app.js`. Se ainda em uso, manter.
+
+**Sub-fase 13.4: Legacy cursor.** Confirmar via grep que `cursor.js` só toca `#cursor` e `#cursor-border` (não há ramificações). Confirmar que o CSS `#cursor { display: none !important }` está ativo (já está em `_cursor.scss` parte legacy). Decisão: remover `<script src=assets/js/cursor.min.js async>` do `index.html`. Deletar arquivos `cursor.js` e `cursor.min.js` do filesystem (após o commit confirmar nada quebrou).
+
+**Validação.** Recarregar o site com DevTools aberto. Verificar:
+- Toggle de tema funciona corretamente (light ↔ dark, persistência se houver).
+- Active link na nav atualiza ao scrollar entre seções.
+- Cursor v4 ainda visível em hover sobre `[data-cursor]` elements.
+- Sidebar (se ainda existir no markup) abre/fecha pelo botão.
+- Console limpo (sem `Cannot read property` de funções removidas).
+
+**Reverter.** Cada sub-fase é um commit independente — revert localizado.
+
+**Estimativa.** 1-2 horas.
+
+---
+
+## 23. Fase 14 — Modularização do `playful.js` em arquivos por feature
+
+Divide o monólito de 66KB em ~8-10 arquivos menores, agrupados por responsabilidade. Não é um build step ainda — apenas reorganização física. O `<script>` em `index.html` passa a listar múltiplos arquivos (ou concatena via simples `cat` se preferir manter um único load).
+
+**Estrutura sugerida de arquivos (em `assets/js/modules/`)**
+
+```
+cursor.js              initCursor + initMagnetic + initImgPreview  — sistema de cursor v4
+hero.js                initHeroReveal + initHeroAurora + initHeroBrushReveal + initHeroLiquid + initBadge — tudo do hero
+sections.js            initSectionMode + initActiveNav + initSectionTagCounter — comportamento por seção
+animations.js          initCounters + initWordReveal + initVelocityMarquee + initScramble + initRipple — animações pontuais
+scroll.js              initSmoothNav + initScrollBar + initDragScroll + initInfiniteSlider — interações de scroll
+theme.js               initThemeMode + persistência localStorage + sync com prefers-color-scheme
+drawer.js              initDrawer + focus trap + ESC + body-lock + theme proxy
+main.js                bootstrap: importa todos os módulos acima e chama os init* em ordem
+```
+
+**Procedimento.** Por módulo:
+
+a) Cortar as funções correspondentes de `playful.js` (manter formatação, comentários, todo `const`/`var` no escopo interno).
+b) Colar em `assets/js/modules/<nome>.js`.
+c) Identificar variáveis e helpers compartilhados (ex.: `prefersReduced`, `isTouch`, `canHover`) — extrair pra `assets/js/modules/_shared.js` ou inline em cada módulo (decisão por bloco).
+d) Cada módulo termina exportando suas funções: `export { initCursor, initMagnetic }`.
+e) `main.js` faz `import { initCursor } from './modules/cursor.js'` etc, e chama todos.
+f) `index.html` carrega só `main.js` com `type="module"` ou compila para um bundle.
+
+**Decisão de formato.** Duas opções:
+
+1. **ES modules nativos (sem bundler).** `<script type="module" src="assets/js/modules/main.js">` carrega cada módulo como dependência via HTTP/2. Vantagem: zero build step. Desvantagem: várias requests, sem tree-shaking. Aceitável se cada módulo for pequeno.
+
+2. **Bundler (esbuild, rollup, vite).** Compila todos os módulos em um único `app.bundle.min.js`. Vantagem: produção otimizada, tree-shaking elimina código morto. Desvantagem: introduz build step e dependência de Node tooling.
+
+Recomendação: começar com opção 1 (ES modules nativos). Avaliar performance em Lighthouse. Se ficar marginal, mover para opção 2 numa fase futura.
+
+**Validação.** Cada módulo extraído isoladamente deve continuar funcionando. Após o split completo, abrir o site em DevTools e validar cada feature (scroll, theme toggle, hover effects, marquees, drawer, etc.).
+
+**Reverter.** Manter `playful.js` intacto durante a Fase 14 e fazer os splits em paralelo. Só remover o `<script src=playful.min.js>` quando todos os módulos estiverem validados.
+
+**Estimativa.** 4-6 horas.
+
+---
+
+## 24. Fase 15 — Integração com `app.js` (consolidação final)
+
+Funde o `app.js` original com os módulos extraídos da Fase 14. Resultado: um único `main.js` (que pode chamar-se `app.js`) que faz tudo. Os arquivos individuais por feature continuam existindo em `assets/js/modules/` mas são importados pelo entry point único.
+
+**Procedimento.**
+
+a) Renomear `assets/js/main.js` (criado na Fase 14) para `assets/js/app.js`, substituindo o `app.js` antigo. O conteúdo do `app.js` antigo (o que sobrou após Fase 13: IntersectionObserver para `.hidden`/`.show`, talvez `toggleSidebar()`) vira mais um módulo: `assets/js/modules/legacy-app.js` ou se integra a `sections.js`.
+
+b) Atualizar `<script>` em `index.html`:
+
+```html
+<!-- antes -->
+<script src=assets/js/cursor.min.js async></script>
+<script src=assets/js/app.min.js async></script>
+<script src=assets/js/playful.min.js defer></script>
+
+<!-- depois -->
+<script src=assets/js/app.js type="module" defer></script>
+```
+
+c) Ajustar a ordem de execução. Os `init*` originalmente eram chamados em ordem específica no IIFE do `playful.js`. Replicar essa ordem no `main.js` /`app.js`:
+
+```javascript
+import { initCursor, initMagnetic, initImgPreview } from './modules/cursor.js';
+import { initHeroReveal, initHeroAurora, initHeroBrushReveal, initHeroLiquid, initBadge } from './modules/hero.js';
+import { initSectionMode, initActiveNav, initSectionTagCounter } from './modules/sections.js';
+import { initCounters, initWordReveal, initVelocityMarquee, initScramble, initRipple } from './modules/animations.js';
+import { initSmoothNav, initScrollBar, initDragScroll, initInfiniteSlider } from './modules/scroll.js';
+import { initThemeMode } from './modules/theme.js';
+import { initDrawer } from './modules/drawer.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+  initThemeMode();      // primeiro: define tema antes de qualquer paint
+  initCursor();
+  initMagnetic();
+  initImgPreview();
+  initHeroReveal();
+  initHeroAurora();
+  initHeroBrushReveal();
+  initHeroLiquid();
+  initBadge();
+  initSectionMode();
+  initActiveNav();
+  initSectionTagCounter();
+  initCounters();
+  initWordReveal();
+  initVelocityMarquee();
+  initScramble();
+  initRipple();
+  initSmoothNav();
+  initScrollBar();
+  initDragScroll();
+  initInfiniteSlider();
+  initDrawer();
+});
+```
+
+**Validação.** Site deve funcionar idêntico ao estado pré-Fase 15. Verificar Network tab em DevTools para confirmar que apenas `app.js` é carregado (+ os módulos importados dinamicamente).
+
+**Reverter.** Mantém a opção de voltar a carregar `playful.min.js` revertendo o `<script>` no `index.html`.
+
+**Estimativa.** 1-2 horas.
+
+---
+
+## 25. Fase 16 — Remoção física do `playful.js` e arquivos legacy
+
+Após Fase 15 estável, remove os arquivos JS legados que viraram dead code.
+
+**Arquivos a deletar.**
+
+- `assets/js/playful.js` (66KB).
+- `assets/js/playful.min.js` (33KB).
+- `assets/js/cursor.js` (2KB — substituído na Fase 13).
+- `assets/js/cursor.min.js` (1KB).
+- `assets/js/app.js` (2KB — substituído na Fase 15 pelo módulo entry).
+- `assets/js/app.min.js` (2KB).
+
+Total bytes removidos: ~106KB de arquivos fonte/build, ~36KB do serving (que era só `app.min.js + cursor.min.js + playful.min.js`).
+
+**Validação.** `grep -r "playful\|cursor.min\|app.min" .` confirma zero referências remanescentes (exceto comentários históricos). Lighthouse score mantido. Console limpo após interação completa.
+
+**Reverter.** Restaurar do git histórico.
+
+**Estimativa.** 30 minutos.
+
+---
+
+## 26. Fase 17 — Modernização e refator dos módulos JS (opcional)
+
+Com a estrutura modular em vigor, oportunidade para refator de qualidade. Não-obrigatório — pode-se considerar a migração JS encerrada na Fase 16.
+
+**Melhorias possíveis por módulo.**
+
+- **`cursor.js`**: substituir `requestAnimationFrame` polling por CSS `transition` + `transform: translate3d()` puro (mais performante, menos JS rodando 60fps). A maioria dos cursor systems modernos usa essa abordagem.
+
+- **`hero.js#initHeroLiquid`**: a WebGL fluid sim é ~1000 linhas e roda continuamente. Avaliar se vale o custo de performance. Alternativas: simplificar para CSS animation + canvas estático, ou lazy-load só quando o hero entra no viewport (já tem `IntersectionObserver` na arquitetura).
+
+- **`sections.js`**: consolidar os 3 observers separados (`initSectionMode`, `initActiveNav`, `initSectionTagCounter`) em um único `IntersectionObserver` com handlers múltiplos — reduz overhead de callback.
+
+- **`theme.js`**: adicionar persistência via `localStorage` (atualmente o toggle não persiste entre recargas).
+
+- **`animations.js`**: avaliar se `initRipple`, `initScramble`, `initWordReveal` são notáveis na UX ou só CPU. Remover se sub-percebidos.
+
+- **`drawer.js`**: revisar focus trap (acessibilidade) — confirmar que TAB cycle corretamente nos elementos do drawer e que ESC fecha.
+
+**Validação.** Antes/depois com Lighthouse Performance score. Test em network throttling 3G simulado.
+
+**Estimativa.** 4-8 horas dependendo do escopo.
+
+---
+
+## 27. Fase 18 — Build pipeline (opcional, considerar só se Fase 17 introduzir muitos módulos)
+
+Se Fase 14 ficar com ES modules nativos e o número de módulos/HTTP requests virar problema (>10 requests no Network tab), introduzir bundler.
+
+**Opção recomendada: `esbuild`.**
+
+- Setup: `npm init -y && npm install --save-dev esbuild`.
+- `package.json` script: `"build:js": "esbuild assets/js/app.js --bundle --minify --outfile=assets/js/app.min.js"`.
+- Atualizar `index.html` para carregar `app.min.js` em vez do entry de módulo.
+- Adicionar `assets/js/app.min.js` ao `.gitignore` (build output) ou comitar para deploys sem CI.
+
+**Vantagens.** Single bundled file (menos HTTP requests), tree-shaking elimina código não usado, minificação avançada (~30-50% menor que minificação manual). Lighthouse melhora.
+
+**Desvantagens.** Introduz dependência de Node tooling no projeto (atualmente Sass via `npx` é a única dep externa). Build step antes de cada deploy.
+
+**Validação.** Comparar bundle size com sum-of-min.js anterior. Lighthouse mantém ou melhora.
+
+**Estimativa.** 1-2 horas.
+
+---
+
+## 28. Critérios para encerrar a migração JS
+
+A camada JS pode ser considerada totalmente migrada quando:
+
+- `grep -r "playful" assets/js/ index.html` retorna zero hits (exceto possivelmente em comentários documentando o histórico).
+- `assets/js/` contém apenas: `app.js` + `modules/*.js` + `console.js` + `toast.js` + `sw.min.js` (ou seu equivalente bundled).
+- HTTP requests JS no Network tab ≤4 (módulos podem ser cached separately).
+- Total JS gzipped servido ≤30KB (vs ~36KB atual com playful.min.js + app.min.js + cursor.min.js).
+- Console limpo após interação completa: hover hero, click em chips, scroll cue, abrir drawer, toggle theme, hover CTAs, scroll por todas as seções.
+- Cada arquivo de módulo tem cabeçalho com comentário explicando responsabilidade + dependências.
+
+**Estimativa total para migração JS completa.** Fase 13 (~2h) + Fase 14 (~5h) + Fase 15 (~1.5h) + Fase 16 (~30min) + Fase 17 opcional (~6h) + Fase 18 opcional (~1.5h) = **~9 horas obrigatórias + 7.5 horas opcionais**, executável em 2-3 sessões focadas.
+
+A ordem é obrigatória: Fase 13 deve vir antes de Fase 14 (sem isso, duplicatas migram pra módulos), Fase 14 antes de Fase 15 (sem isso, não há módulos pra integrar), Fase 15 antes de Fase 16 (sem isso, há referências quebradas no html). Fases 17 e 18 são desacopladas — podem entrar em qualquer ordem após Fase 16, ou não entrar.

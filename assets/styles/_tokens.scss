@@ -11,15 +11,15 @@
 //   2. Typography family stack (font-display, font-mono, font-condensed).
 //      Loaded here because they're palette-adjacent and used across the site.
 //
-//   3. Legacy `--color-*` palette — consolidated here during Fase 5 of the
-//      migration plan. Originally scattered across four blocks in
-//      `_header.scss` (the base, two @media for system theme, plus
-//      .light-mode / .dark-mode user overrides). Now centralized: the base
-//      values live in `:root`, the theme overrides live in their own blocks
-//      at the bottom of this file. Active consumers: cursor, dropdown,
-//      sidebar, tooltip, scroll-icon, page-settings, plus dead legacy-inline
-//      rules. Future migration should replace each `var(--color-foo)` call
-//      site with the appropriate v4 token and then delete the legacy block.
+//   3. Legacy `--color-*` palette — drastically reduced during Fase 8 of
+//      the migration. Originally 14 tokens (`--color-primary`, `secondary`,
+//      `white`, `white-2`, `black`, `grey-{0..6}`, `opposite`, `yellow`).
+//      All except `--color-primary` and `--color-white` were migrated to v4
+//      tokens or inlined as literals at every call site. The two survivors
+//      encode an inverse-swap pattern that the toast component still relies
+//      on (bg = text-color-of-body, text = bg-color-of-body — pops up white
+//      on dark, dark on light). v4 has no equivalent inverse-swap pair.
+//      Only consumer: `_toast.scss` (6 sites).
 // =============================================================================
 
 :root {
@@ -56,45 +56,24 @@
   --pad-x: clamp(20px, 4vw, 64px);
   --pad-y: clamp(60px, 10vh, 140px);
 
-  /* -- Legacy palette (consolidated from _header.scss) ------------------- */
-  /* `--color-secondary` aliased to `--signal` so the brand red lives in one
-     place. `--color-primary` and `--color-white` keep their literal values
-     because legacy semantics ("background" vs "text") differ from v4 (where
-     each element picks its own color contextually). Light/dark swaps for
-     the rest live in the override blocks at the bottom of this file. */
+    /* -- Legacy palette (minimised from full --color-* set) --------------- */
+  /* Only two tokens survived migration of Fase 8: `--color-primary` and
+     `--color-white`. They encode the inverse-swap pattern that the toast
+     component (in _toast.scss) relies on — bg = "text color of body",
+     text = "bg color of body" — which produces a popup that's WHITE-on-dark
+     in dark theme and DARK-on-light in light theme. v4 doesn't have an
+     equivalent inverse-swap pair, so these stay as the last legacy tokens.
+     Everything else (`--color-secondary` → --signal, `--color-grey-*`,
+     `--color-opposite` → --hue-yellow, etc.) was inlined or migrated to v4. */
   --color-primary:   #0a0a0a;
-  --color-secondary: var(--signal);
   --color-white:     #fff;
-  --color-white-2:   #fff;
-  --color-black:     #000;
-  --color-black-2:   #fff;
-  --color-grey-0:    #f8f8f8;
-  --color-grey-1:    #dbe1e8;
-  --color-grey-2:    #b2becd;
-  --color-grey-3:    #6c7983;
-  --color-grey-4:    #454e56;
-  --color-grey-5:    #2a2e35;
-  --color-grey-6:    #12181b;
-  --color-opposite:  #976d0c;
-  --color-yellow:    #976d0c;
 }
 
 /* -- Legacy palette: system-light override --------------------------------- */
-/* When the system prefers light, the legacy palette flips its background +
-   text + greys + accent. (Note: `:not(.dark-mode)` lets a user explicit
-   dark-toggle win over the system preference.) */
 @media (prefers-color-scheme: light) {
   :root:not(.dark-mode) {
     --color-primary:  #fff;
     --color-white:    #0a0a0a;
-    --color-black-2:  #000;
-    --color-grey-1:   #6c7983;
-    --color-grey-2:   #6c7983;
-    --color-grey-3:   #6c7983;
-    --color-grey-4:   #b2becd;
-    --color-grey-5:   #e8e8e8;
-    --color-grey-6:   #b2becd;
-    --color-opposite: #edad19;
   }
 }
 
@@ -102,28 +81,10 @@
 .light-mode {
   --color-primary:  #fff;
   --color-white:    #0a0a0a;
-  --color-black-2:  #000;
-  --color-grey-1:   #6c7983;
-  --color-grey-2:   #6c7983;
-  --color-grey-3:   #6c7983;
-  --color-grey-4:   #b2becd;
-  --color-grey-5:   #e8e8e8;
-  --color-grey-6:   #b2becd;
-  --color-opposite: #edad19;
 }
 
 /* -- Legacy palette: explicit user toggle to dark ------------------------- */
-/* Re-asserts the dark values so a user-explicit dark toggle on a light OS
-   gets the same legacy palette they'd get on a dark OS. */
 .dark-mode {
   --color-primary:  #0a0a0a;
   --color-white:    #fff;
-  --color-black-2:  #fff;
-  --color-grey-1:   #dbe1e8;
-  --color-grey-2:   #b2becd;
-  --color-grey-3:   #6c7983;
-  --color-grey-4:   #454e56;
-  --color-grey-5:   #2a2e35;
-  --color-grey-6:   #12181b;
-  --color-opposite: #976d0c;
 }

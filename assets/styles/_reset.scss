@@ -1,3 +1,5 @@
+@use "include" as *;
+
 // =============================================================================
 // Global resets + page-level scaffolding for the modern (v4) design.
 // Extracted from playful.css (blocks 1 + 14 + scattered globals).
@@ -18,7 +20,7 @@ body.v4 *{ cursor: inherit; }
 .v4 section[data-section-bg="ink"]{ background: var(--ink); color: #fff; }
 .v4 section[data-section-bg="cream"]{ background: var(--cream); color: var(--ink); }
 .v4 section[data-section-bg="red"]{ background: var(--signal); color: #fff; }
-.v4 .container{ display: block; }
+
 .skip-link{
   position: absolute; top: -100px; left: 16px;
   background: #000; color: #fff; padding: 8px 14px;
@@ -85,3 +87,29 @@ body.v4{ cursor: none; }
   border-radius: 999px;
 }
 .bento__item .title h2:after{ display: none !important; }
+
+
+/* ────────────────────────────────────────────────────────────────────────
+   Utility classes — toggled by app.js's IntersectionObserver to fade
+   sections in as they enter the viewport. Folded in here during Fase 9
+   from the now-dissolved _legacy-inline.scss.
+   ──────────────────────────────────────────────────────────────────────── */
+.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-100%);
+  will-change: transform;
+  transition: transform 1s ease-in-out 0.2s, opacity 1s ease-in-out 0.2s;
+}
+
+.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+/* At `lg` (≤900px): force body overflow-x: hidden so hero aurora blobs and
+   orb don't create horizontal scroll when the photo becomes single-column. */
+@include respond-to("lg") {
+  body { overflow-x: hidden; }
+}

@@ -1,3 +1,5 @@
+@use "include" as *;
+
 // =============================================================================
 // Services section — bento grid with big numerals + accordion rows.
 // =============================================================================
@@ -160,3 +162,49 @@
   .bento__item, .bento__item[data-size="lg"]{ grid-column: span 1 !important; }
 }
 
+
+
+/* ────────────────────────────────────────────────────────────────────────
+   Responsive overrides for .services .bento — folded in here during Fase 9
+   from _legacy-inline.scss. The compound selector `.services .bento ...`
+   has higher specificity than the `.bento ...` rules above, so these win
+   at the matched breakpoint without needing `!important`.
+   ──────────────────────────────────────────────────────────────────────── */
+@include respond-to("md") {
+  .services {
+    padding: var(--pad-y) clamp(16px, 4vw, 28px);
+
+    .bento {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+    }
+
+    .bento ul {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .bento__item,
+    .bento__item[data-size="lg"] {
+      grid-column: span 1;
+      width: 100%;
+      max-width: none;
+      padding: 22px 20px;
+      min-height: auto;
+    }
+  }
+}
+
+@include respond-to("xs") {
+  .services {
+    padding: 56px 14px;
+
+    .bento ul { gap: 10px; }
+
+    .bento__item,
+    .bento__item[data-size="lg"] {
+      padding: 18px 16px;
+    }
+  }
+}

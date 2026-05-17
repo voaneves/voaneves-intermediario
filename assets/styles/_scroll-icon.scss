@@ -4,15 +4,15 @@
   bottom: 10px;
   right: 10px;
   padding: 10px 10px 5px 10px;
-  background-color: var(--color-grey-4);
+  background-color: #454e56;
   transition: opacity 0.4s ease-in-out;
 
   .symbol {
     content: "";
     width: 0.5em;
     height: 0.5em;
-    border-right: 3px solid var(--color-white);
-    border-bottom: 3px solid var(--color-white);
+    border-right: 3px solid var(--cream);
+    border-bottom: 3px solid var(--cream);
     transform: rotate(225deg);
   }
 }

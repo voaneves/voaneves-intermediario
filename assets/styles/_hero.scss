@@ -268,6 +268,18 @@ body.light-mode .hero__orb{
   position: absolute;
   inset: 0;
   z-index: 2;
+  /* Skeleton shimmer behind the photo — pulses while the image bytes
+     download, then gets covered by the loaded <img> via object-fit:cover.
+     See `.skeleton` keyframes in _animations.scss; respects
+     prefers-reduced-motion. */
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,.03) 0%,
+    rgba(255,255,255,.08) 50%,
+    rgba(255,255,255,.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
   transform: translate3d(var(--photo-x,0), var(--photo-y,0), 0);
   transition: transform .55s cubic-bezier(.22,.61,.36,1);
   animation: v4PhotoBreathe 9s ease-in-out infinite alternate;
@@ -283,6 +295,10 @@ body.light-mode .hero__orb{
   position: absolute;
   inset: 0;
   width: 100% !important; height: 100% !important;
+  /* aspect-ratio matches the source webp (333×500) — gives browser a
+     hint to reserve correctly-proportioned space before image bytes
+     arrive (defense-in-depth alongside the HTML width/height attrs). */
+  aspect-ratio: 333 / 500;
   object-fit: cover !important;
   object-position: center 15%;
   /* Bottom layer is now ALWAYS in full color. The grayscale lives on

@@ -8,9 +8,8 @@
 // Sass built-in map module — exposes `map.get()`, `map.has-key()`,
 // `map.keys()`, `map.merge()`, etc. The global versions (`map-get`,
 // `map-has-key`, `map-keys`) are deprecated in Dart Sass 1.33+ and will
-// be removed in 2.0. The responsive mixins below (`respond-to`,
-// `respond-from`, `respond-between`) consume the `$breakpoints` map and
-// should be migrated to the namespaced calls in a follow-up.
+// be removed in 2.0. All consumers in this file (`respond-to`,
+// `respond-from`, `respond-between`) use the namespaced syntax.
 @use "sass:map";
 
 @mixin inline-block-center {
@@ -137,7 +136,7 @@ $breakpoints: (
 //
 @mixin respond-to($name) {
   @if not map.has-key($breakpoints, $name) {
-    @warn "respond-to: unknown breakpoint `#{$name}`. Available: #{map-keys($breakpoints)}.";
+    @warn "respond-to: unknown breakpoint `#{$name}`. Available: #{map.keys($breakpoints)}.";
   } @else {
     @media screen and (max-width: map.get($breakpoints, $name)) {
       @content;
@@ -155,10 +154,10 @@ $breakpoints: (
 //   }
 //
 @mixin respond-from($name) {
-  @if not map-has-key($breakpoints, $name) {
-    @warn "respond-from: unknown breakpoint `#{$name}`. Available: #{map-keys($breakpoints)}.";
+  @if not map.has-key($breakpoints, $name) {
+    @warn "respond-from: unknown breakpoint `#{$name}`. Available: #{map.keys($breakpoints)}.";
   } @else {
-    @media screen and (min-width: map-get($breakpoints, $name) + 1) {
+    @media screen and (min-width: map.get($breakpoints, $name) + 1) {
       @content;
     }
   }
@@ -169,12 +168,12 @@ $breakpoints: (
 //   @include respond-between("sm", "lg") { ... }     // 601px … 900px (tablets)
 //
 @mixin respond-between($from, $to) {
-  @if not map-has-key($breakpoints, $from) or not map-has-key($breakpoints, $to) {
+  @if not map.has-key($breakpoints, $from) or not map.has-key($breakpoints, $to) {
     @warn "respond-between: unknown breakpoint(s).";
   } @else {
     @media screen
-      and (min-width: map-get($breakpoints, $from) + 1)
-      and (max-width: map-get($breakpoints, $to))
+      and (min-width: map.get($breakpoints, $from) + 1)
+      and (max-width: map.get($breakpoints, $to))
     {
       @content;
     }
