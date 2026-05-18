@@ -124,6 +124,24 @@
 .v4.light-mode .nav[data-mode="cream"]{ color: var(--ink); }
 .v4.light-mode .cta{ background: var(--ink); color: var(--cream); }
 .v4.light-mode .cta:hover{ background: var(--signal); color: #fff; }
+
+/* Dark-mode + system-dark mirror: force the nav CTA to be uniformly cream-
+   on-ink, regardless of `data-mode` adapter set by initSectionMode() in
+   playful.js. Without this, every section transition flips the CTA bg
+   between cream/ink — visually jarring in dark theme where all section
+   surfaces converge to dark via the section conversions, making the flip
+   stand out. `!important` is required to beat `.nav[data-mode="ink"] .cta`
+   (specificity 0,3,0) which would otherwise win source-order. */
+.v4.dark-mode .cta,
+.v4:not(.light-mode) .cta{
+  background: var(--cream) !important;
+  color: var(--ink) !important;
+}
+.v4.dark-mode .cta:hover,
+.v4:not(.light-mode) .cta:hover{
+  background: var(--signal) !important;
+  color: #fff !important;
+}
 .v4.light-mode .timeline__card{ background: var(--cream-soft); color: var(--ink); }
 .v4.light-mode .timeline__card-year{ color: rgba(0,0,0,.55); }
 .v4.light-mode .timeline__card-co{ color: rgba(0,0,0,.75) !important; }
