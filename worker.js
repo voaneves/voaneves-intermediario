@@ -1,70 +1,94 @@
-// Names of the two caches used in this version of the service worker.
-// Change to v2, etc. when you update any of the local resources, which will
-// in turn trigger the install event again.
-const PRECACHE = "precache-v1";
-const RUNTIME = "runtime";
+/* Service Worker — voaneves.com (v4)
+ *
+ * Strategy:
+ *  - HTML navigations  -> network-first (always fresh after a deploy; cache fallback offline)
+ *  - Static assets     -> stale-while-revalidate (instant from cache, refreshed in background,
+ *                         so non-hashed assets update within a visit after a deploy)
+ *  - Cache VERSION is bumped on every deploy -> activate() purges all old caches.
+ *
+ * NOTE: bump VERSION on every deploy (or wire it to your build hash) so returning
+ * visitors never get served stale CSS/JS.
+ */
+const VERSION = "v4-2026-06-28";
+const PRECACHE = "precache-" + VERSION;
+const RUNTIME = "runtime-" + VERSION;
 
-// A list of local resources we always want to be cached.
+// Paths are relative to the SW scope, so this works at both /voaneves-intermediario/ and the root.
 const PRECACHE_URLS = [
-  "/", // Alias for index.html
+  "./",
+  "./index.html",
+  "./assets/styles/styles.css",
+  "./assets/js/app.min.js",
+  "./assets/js/cursor.min.js",
+  "./assets/js/playful.min.js",
+  "./assets/js/toast.min.js",
+  "./assets/js/console.min.js",
+  "./assets/fonts/fraunces-normal.woff2",
+  "./assets/fonts/header.woff2",
+  "./assets/img/main_1.webp",
 ];
 
-// The install handler takes care of precaching the resources we always need.
+// Install: precache critical assets. allSettled => a single 404 won't block activation.
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(PRECACHE)
-      .then(function (cache) {
-        console.log("Opened cache");
-        return cache.addAll(PRECACHE_URLS);
-      })
-      .then(self.skipWaiting())
+      .then((cache) => Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url))))
+      .then(() => self.skipWaiting())
   );
 });
 
-// The activate handler takes care of cleaning up old caches.
+// Activate: drop caches from previous versions, take control of open pages immediately.
 self.addEventListener("activate", (event) => {
-  const currentCaches = [PRECACHE, RUNTIME];
+  const keep = [PRECACHE, RUNTIME];
   event.waitUntil(
     caches
       .keys()
-      .then((cacheNames) => {
-        return cacheNames.filter(
-          (cacheName) => !currentCaches.includes(cacheName)
-        );
-      })
-      .then((cachesToDelete) => {
-        return Promise.all(
-          cachesToDelete.map((cacheToDelete) => {
-            return caches.delete(cacheToDelete);
-          })
-        );
-      })
+      .then((names) => Promise.all(names.filter((n) => !keep.includes(n)).map((n) => caches.delete(n))))
       .then(() => self.clients.claim())
   );
 });
 
-// The fetch handler serves responses for same-origin resources from a cache.
-// If no response is found, it populates the runtime cache with the response
-// from the network before returning it to the page.
 self.addEventListener("fetch", (event) => {
-  // Skip cross-origin requests, like those for Google Analytics.
-  if (event.request.url.startsWith(self.location.origin)) {
-    event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
+  const req = event.request;
+  if (req.method !== "GET") return;
 
-        return caches.open(RUNTIME).then((cache) => {
-          return fetch(event.request).then((response) => {
-            // Put a copy of the response in the runtime cache.
-            return cache.put(event.request, response.clone()).then(() => {
-              return response;
-            });
-          });
-        });
-      })
-    );
+  let url;
+  try {
+    url = new URL(req.url);
+  } catch (e) {
+    return;
   }
+  if (url.origin !== self.location.origin) return;
+
+  // HTML navigations -> network-first (fresh index after every deploy; cached fallback offline).
+  const accept = req.headers.get("accept") || "";
+  if (req.mode === "navigate" || accept.includes("text/html")) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(RUNTIME).then((cache) => cache.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req).then((cached) => cached || caches.match("./index.html")))
+    );
+    return;
+  }
+
+  // Static assets -> stale-while-revalidate.
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      const network = fetch(req)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(RUNTIME).then((cache) => cache.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => cached);
+      return cached || network;
+    })
+  );
 });
