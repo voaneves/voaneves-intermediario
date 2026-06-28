@@ -206,34 +206,6 @@
   }
 
   // ============================================================
-  // 3. HERO LETTER REVEAL
-  // ============================================================
-  function initHeroReveal() {
-    if (prefersReduced) return;
-    document.querySelectorAll(".hero__line").forEach(function (line) {
-      if (line.dataset.split) return;
-      line.dataset.split = "1";
-      var txt = line.getAttribute("data-text") || line.textContent;
-      line.textContent = "";
-      var letters = [];
-      for (var i = 0; i < txt.length; i++) {
-        var s = document.createElement("span");
-        s.className = "pf-letter";
-        s.style.transitionDelay = (i * 35) + "ms";
-        s.textContent = txt[i] === " " ? " " : txt[i];
-        s.style.display = "inline-block";
-        line.appendChild(s);
-        letters.push(s);
-      }
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-          letters.forEach(function (l) { l.classList.add("in"); });
-        });
-      });
-    });
-  }
-
-  // ============================================================
   // 4. SECTION BG-MODE WATCHER (nav adapts)
   // ============================================================
   function initSectionMode() {
@@ -1132,7 +1104,6 @@
     try {
       initCursor();
       initMagnetic();
-      initHeroReveal();
       initHeroBrushReveal();
       initSectionMode();
       initActiveNav();

@@ -17,6 +17,45 @@ AWWWARDS and Lighthouse pull in opposite directions: jurors reward *motion, orig
 
 ---
 
+## Execution status & backlog
+
+> **The P-series is Phase 1a = Performance only.** Accessibility / SEO / Best Practices are **Phase 1b** — a separate track, executed later (not P-numbered).
+
+**Phase 1a done (deployed 2026-06-28):** P1 preload LCP image · P2 self-host Fraunces (Google Fonts removed) · P3 remove no-cache metas · P4 cut dead WebGL from `playful.js` (−12.8 KB) · P5 rewrite service worker (network-first HTML, stale-while-revalidate assets, versioned caches).
+**Done, awaiting re-audit:** P6 desktop CLS fix (preload the *italic* hero font instead of normal).
+
+**Live audit after deploy (median of repeated runs; lab, CrUX = No Data):**
+
+| | Perf | A11y | BP | SEO | Key CWV |
+|---|---|---|---|---|---|
+| Mobile | **95** (was 87) | 92 | 96 | 92 | LCP 2.5s (was 3.1) · TBT ~10ms · CLS 0.008 |
+| Desktop | **88** (was 87) | 96 | 96 | 92 | LCP 0.4s · TBT ~10–70ms · **CLS 0.227** |
+
+LCP improved on both form factors — P1/P2 worked. Remaining blockers are now specific and small.
+
+### Phase 1a — remaining performance (the P-series)
+
+| # | Item | Unblocks | Effort | Risk |
+|---|------|----------|--------|------|
+| **P7** | **Mobile LCP < 2.0s.** Responsive hero image — `srcset`/`sizes` with a smaller mobile WebP + AVIF; rebalance the font-vs-image preload budget. | Mobile LCP 2.5 → <2.0 ⇒ **Mobile Perf 95 → ~100** | M | Med |
+| **P8** | **Image/asset pipeline.** AVIF + responsive `srcset` for portfolio/timeline images; confirm intrinsic dimensions everywhere; subset/drop unused fonts (`raleway-*.woff2`). | Speed Index, bandwidth, repeat-visit perf | M | Low |
+| **P9** | **Real cache headers (CDN).** Cloudflare free in front of GitHub Pages: `immutable` long `max-age` on `/assets/*`, Brotli, HTTP/3. The infra half of P3. | "Efficient cache policy" + real-world repeat visits | M (infra) | Low |
+| **P10** | **Critical-path & main-thread tuning.** Idle/defer non-critical JS init, passive listeners, subset the Fraunces woff2 to used glyphs, trim Speed Index (mobile SI ~3.6s). | TBT / SI / INP headroom; smaller fonts | M | Low |
+
+**P6 (done) + P7–P10 close the _Performance_ category to ~100 on both form factors.**
+
+### Phase 1b — Accessibility / SEO / Best Practices (separate track, executed later)
+
+| Item | Unblocks | Effort |
+|------|----------|--------|
+| **A11y** — `aria-label` on icon-only links; fix the flagged color-contrast pairs; touch targets ≥44px. | A11y 92 → 100 | S–M |
+| **SEO** — canonical for the deploy context (self-fixes at root) + `Person` JSON-LD + `sameAs` + `hreflang` from `portfolio-data.json`. | SEO 92 → 100 | S |
+| **Best Practices** — tighten CSP (drop `* 'unsafe-inline' 'unsafe-eval'`); strip `console.log`s. | BP 96 → 100 | M |
+
+Phase 2 (UX/AWWWARDS) and Phase 3 (content) remain separate tracks below.
+
+---
+
 ## Phase 0 — Baseline & truth (½ day)
 
 Before changing anything, capture reality.
