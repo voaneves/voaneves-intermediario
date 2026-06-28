@@ -19,30 +19,45 @@ AWWWARDS and Lighthouse pull in opposite directions: jurors reward *motion, orig
 
 ## Execution status & backlog
 
-> **The P-series is Phase 1a = Performance only.** Accessibility / SEO / Best Practices are **Phase 1b** — a separate track, executed later (not P-numbered).
+> The **P-series = Phase 1a (Performance)**. Accessibility / SEO / Best Practices = **Phase 1b**, a separate track executed later.
 
-**Phase 1a done (deployed 2026-06-28):** P1 preload LCP image · P2 self-host Fraunces (Google Fonts removed) · P3 remove no-cache metas · P4 cut dead WebGL from `playful.js` (−12.8 KB) · P5 rewrite service worker (network-first HTML, stale-while-revalidate assets, versioned caches).
-**Done, awaiting re-audit:** P6 desktop CLS fix (preload the *italic* hero font instead of normal).
+### Phase 1a — Performance
 
-**Live audit after deploy (median of repeated runs; lab, CrUX = No Data):**
+**Done & deployed (2026-06-28):**
+
+- ~~**P1** — Preload the LCP image~~ ✅
+- ~~**P2** — Self-host Fraunces (Google Fonts removed)~~ ✅
+- ~~**P3** — Remove `no-cache` metas~~ ✅
+- ~~**P4** — Cut dead WebGL from `playful.js` (−12.8 KB)~~ ✅
+- ~~**P5** — Rewrite service worker (network-first HTML, SWR assets, versioned cache)~~ ✅
+- ~~**P6** — Preload the *italic* hero font~~ ✅
+- ~~**P7** — Hero text instant (remove letter-reveal)~~ ✅
+- ~~**P8** — Hero entrance instant (kill the opacity cascade)~~ ✅
+- ~~**P9** — `font-display:optional` on Fraunces~~ ✅ *applied* — ⚠️ **not effective on the live build (still swapping) → see P11**
+
+**Latest live audit (after the P1–P9 deploy; lab, CrUX = No Data):**
 
 | | Perf | A11y | BP | SEO | Key CWV |
 |---|---|---|---|---|---|
-| Mobile | **95** (was 87) | 92 | 96 | 92 | LCP 2.5s (was 3.1) · TBT ~10ms · CLS 0.008 |
-| Desktop | **88** (was 87) | 96 | 96 | 92 | LCP 0.4s · TBT ~10–70ms · **CLS 0.227** |
+| Mobile | **96** (was 87) | 92 | 96 | 92 | LCP 2.5s · TBT ~10ms · SI 2.9s · CLS 0.008 |
+| Desktop | **77 ▼** (was 87) | 96 | 96 | 92 | FCP 0.3s · LCP 0.5s · SI 0.6s · **CLS 0.688** 🔴 |
 
-LCP improved on both form factors — P1/P2 worked. Remaining blockers are now specific and small.
+The hero text fix (P7/P8) worked — the LCP element moved off the text — but it **unmasked a font-swap layout shift** on the giant hero name, which now dominates desktop CLS. That's the #1 fix below.
 
-### Phase 1a — remaining performance (the P-series)
+**Remaining — score blockers first:**
 
-| # | Item | Unblocks | Effort | Risk |
-|---|------|----------|--------|------|
-| **P7** | **Mobile LCP < 2.0s.** Responsive hero image — `srcset`/`sizes` with a smaller mobile WebP + AVIF; rebalance the font-vs-image preload budget. | Mobile LCP 2.5 → <2.0 ⇒ **Mobile Perf 95 → ~100** | M | Med |
-| **P8** | **Image/asset pipeline.** AVIF + responsive `srcset` for portfolio/timeline images; confirm intrinsic dimensions everywhere; subset/drop unused fonts (`raleway-*.woff2`). | Speed Index, bandwidth, repeat-visit perf | M | Low |
-| **P9** | **Real cache headers (CDN).** Cloudflare free in front of GitHub Pages: `immutable` long `max-age` on `/assets/*`, Brotli, HTTP/3. The infra half of P3. | "Efficient cache policy" + real-world repeat visits | M (infra) | Low |
-| **P10** | **Critical-path & main-thread tuning.** Idle/defer non-critical JS init, passive listeners, subset the Fraunces woff2 to used glyphs, trim Speed Index (mobile SI ~3.6s). | TBT / SI / INP headroom; smaller fonts | M | Low |
+| # | Item (PSI insight) | Root cause | Fix step | Impact |
+|---|--------------------|-----------|----------|--------|
+| **P11** 🔴 | **Layout shift culprits — CLS 0.688** | Hero name paints in fallback serif, then swaps to Fraunces italic → huge reflow (visible in filmstrip); `font-display:optional` not effective live. | (a) confirm `optional` is in the deployed `index.html`; (b) add a **metrics-matched fallback** `@font-face` (`size-adjust` + `ascent/descent/line-gap-override`) so the fallback fills the exact Fraunces box ⇒ zero shift; (c) optionally pin the hero line-box height. | Desktop CLS → ~0 ⇒ **77 → ~100** |
+| **P12** 🔴 | **Font display — 70 ms** | **icomoon** `@font-face` uses `font-display:block` (icons hidden up to 3 s). | icomoon `block` → `swap`; keep Fraunces `optional`. | clears the audit |
+| **P13** | **Forced reflow** | `playful.js` reads layout (`offsetWidth`/`getBoundingClientRect`/`getComputedStyle`) interleaved with writes — `initInfiniteSlider`, `initSectionMode`, aurora loop. | Batch reads before writes; cache widths; `ResizeObserver` instead of sync reads in scroll/raf. | INP / smoothness |
+| **P14** | **Non-composited animations — 76 elements** | Animations on non-GPU props (marquee `background-position`, shimmer, JS-mutated `animation-duration`). | Move marquees/shimmer to `transform`/`opacity`; drop the velocity-marquee JS; cut animated-node count. | main-thread paint |
+| **P15** | **Long main-thread tasks — 3 tasks** | Effect init (cursor, aurora, slider clone+measure) runs in big tasks on `DOMContentLoaded`. | Defer non-critical effects to `requestIdleCallback`/after `load`, chunked ("effects after load"). | TBT / INP |
+| **P16** | **Mobile LCP — photo render delay ~1.09 s** | Hero photo is now the LCP; its stable paint is delayed (grayscale filter / cutout `v4PhotoBreathe`). | Investigate what gates the photo paint; consider a smaller mobile `srcset`/AVIF variant. | Mobile 96 → ~100 |
+| **P9→infra** | **Efficient cache lifetimes — 168 KiB** | GitHub Pages 10-min TTL. | Execute the **Cloudflare guide** (`P9-cloudflare-caching.md`) — your dashboard. | real-world repeat visits |
+| **P17** (opt.) | **Image pipeline · render-blocking 10 ms · DOM size** | Images already optimised (webp/responsive/lazy/dims); minor leftovers. | AVIF only if desired; trim marquee-duplicated DOM. Low value (assessed). | marginal |
 
-**P6 (done) + P7–P10 close the _Performance_ category to ~100 on both form factors.**
+**Do first: P11 + P12** — the only two blocking the score (desktop is failing purely on CLS). P13–P17 are diagnostics / real-world that barely move the lab number.
 
 ### Phase 1b — Accessibility / SEO / Best Practices (separate track, executed later)
 
