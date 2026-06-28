@@ -1104,7 +1104,6 @@
     try {
       initCursor();
       initMagnetic();
-      initHeroBrushReveal();
       initSectionMode();
       initActiveNav();
       initCounters();
@@ -1130,4 +1129,12 @@
   } else {
     boot();
   }
+
+  // Hero brush-reveal is a desktop hover effect that overlays a <canvas> on the
+  // hero photo. Deferring it to `load` keeps that canvas from occluding the
+  // image during the LCP window (which caused NO_LCP once CSS became render-blocking).
+  function bootBrush() { try { initHeroBrushReveal(); } catch (e) {} }
+  if (document.readyState === "complete") bootBrush();
+  else window.addEventListener("load", bootBrush, { once: true });
 })();
+/* v4 — brush-reveal deferred to load (LCP-safe) */

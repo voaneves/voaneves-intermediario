@@ -33,7 +33,9 @@ AWWWARDS and Lighthouse pull in opposite directions: jurors reward *motion, orig
 - ~~**P6** — Preload the *italic* hero font~~ ✅
 - ~~**P7** — Hero text instant (remove letter-reveal)~~ ✅
 - ~~**P8** — Hero entrance instant (kill the opacity cascade)~~ ✅
-- ~~**P9** — `font-display:optional` on Fraunces~~ ✅ *applied* — ⚠️ **not effective on the live build (still swapping) → see P11**
+- ~~**P9** — `font-display:optional` on Fraunces~~ ✅ (fixed **mobile** CLS → 0)
+- ~~**P11** — Desktop CLS: render-blocking `styles.css`~~ ✅ — root cause was the **async CSS reflowing the hero ~297px** on cold load (not the font); **CLS now 0 on both form factors**. ⚠️ *desktop run intermittently reports `NO_LCP` (perf 0) — under investigation; likely PSI flakiness or a render-blocking interaction.*
+- ~~**P12** — icomoon `font-display` `block` → `swap`~~ ✅ *(applied; pending deploy)*
 
 **Latest live audit (after the P1–P9 deploy; lab, CrUX = No Data):**
 
@@ -48,8 +50,6 @@ The hero text fix (P7/P8) worked — the LCP element moved off the text — but 
 
 | # | Item (PSI insight) | Root cause | Fix step | Impact |
 |---|--------------------|-----------|----------|--------|
-| **P11** 🔴 | **Layout shift culprits — CLS 0.688** | Hero name paints in fallback serif, then swaps to Fraunces italic → huge reflow (visible in filmstrip); `font-display:optional` not effective live. | (a) confirm `optional` is in the deployed `index.html`; (b) add a **metrics-matched fallback** `@font-face` (`size-adjust` + `ascent/descent/line-gap-override`) so the fallback fills the exact Fraunces box ⇒ zero shift; (c) optionally pin the hero line-box height. | Desktop CLS → ~0 ⇒ **77 → ~100** |
-| **P12** 🔴 | **Font display — 70 ms** | **icomoon** `@font-face` uses `font-display:block` (icons hidden up to 3 s). | icomoon `block` → `swap`; keep Fraunces `optional`. | clears the audit |
 | **P13** | **Forced reflow** | `playful.js` reads layout (`offsetWidth`/`getBoundingClientRect`/`getComputedStyle`) interleaved with writes — `initInfiniteSlider`, `initSectionMode`, aurora loop. | Batch reads before writes; cache widths; `ResizeObserver` instead of sync reads in scroll/raf. | INP / smoothness |
 | **P14** | **Non-composited animations — 76 elements** | Animations on non-GPU props (marquee `background-position`, shimmer, JS-mutated `animation-duration`). | Move marquees/shimmer to `transform`/`opacity`; drop the velocity-marquee JS; cut animated-node count. | main-thread paint |
 | **P15** | **Long main-thread tasks — 3 tasks** | Effect init (cursor, aurora, slider clone+measure) runs in big tasks on `DOMContentLoaded`. | Defer non-critical effects to `requestIdleCallback`/after `load`, chunked ("effects after load"). | TBT / INP |
