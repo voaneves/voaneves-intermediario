@@ -17,3 +17,18 @@ assets/js/snake.js
 assets/js/snake.min.js
 assets/js/tic-tac-toe.js
 assets/js/tic-tac-toe.min.js
+
+# --- Dev / build artifacts ---
+node_modules/
+package.json
+package-lock.json
+
+# --- Planning, audit & improvement docs (not part of the site) ---
+improvement-plan/
+
+# --- Temporary / generated files ---
+critical.css
+*.bak.html
+index.bak.html
+assets/styles/styles.*.css
+assets/styles/styles.*.css.map
