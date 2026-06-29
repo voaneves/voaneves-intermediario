@@ -213,8 +213,10 @@
     if (!nav) return;
     var sections = document.querySelectorAll("section[data-section-bg]");
     if (!sections.length) return;
+    // Cache the nav height — it's fixed; reading it on every scroll frame
+    // forced a layout. Recompute only on resize.
+    var navH = nav.getBoundingClientRect().height;
     function update() {
-      var navH = nav.getBoundingClientRect().height;
       var probeY = navH + 4;
       var current = null;
       sections.forEach(function (s) {
@@ -228,6 +230,9 @@
     var ticking = false;
     window.addEventListener("scroll", function () {
       if (!ticking) { requestAnimationFrame(function(){ update(); ticking=false; }); ticking = true; }
+    }, { passive: true });
+    window.addEventListener("resize", function () {
+      navH = nav.getBoundingClientRect().height;
     }, { passive: true });
     update();
   }
@@ -333,31 +338,9 @@
     ps.forEach(function (p) { io.observe(p); });
   }
 
-  // ============================================================
-  // 8. VELOCITY MARQUEE
-  // ============================================================
-  function initVelocityMarquee() {
-    if (prefersReduced) return;
-    var marquees = document.querySelectorAll(".marquee__wrapper_content");
-    if (!marquees.length) return;
-    var lastY = window.scrollY, vel = 0, ticking = false;
-    function onScroll() {
-      var dy = window.scrollY - lastY;
-      lastY = window.scrollY;
-      vel = Math.min(6, Math.abs(dy)*0.35);
-      if (!ticking) { requestAnimationFrame(apply); ticking = true; }
-    }
-    function apply() {
-      marquees.forEach(function (m) {
-        var base = parseFloat(getComputedStyle(m).animationDuration) || 50;
-        m.style.animationDuration = Math.max(8, base) / (1 + vel) + "s";
-      });
-      vel *= 0.85;
-      if (vel > 0.05) requestAnimationFrame(apply);
-      else ticking = false;
-    }
-    window.addEventListener("scroll", onScroll, { passive: true });
-  }
+  // [P14] Velocity-marquee removed: it rewrote animationDuration on every
+  // scroll frame, which de-composited the (otherwise GPU-only transform)
+  // marquee. The marquee now runs purely on the compositor at constant speed.
 
   // ============================================================
   // 9. SCRAMBLE TEXT on view (section tags)
@@ -600,11 +583,15 @@
       });
 
       function halfWidth() {
-        // The width occupied by the original set
+        // The width occupied by the original set.
+        // Read the gap ONCE (it's identical for every child) instead of
+        // calling getComputedStyle inside the loop — avoids a forced reflow
+        // per card on init/resize.
         var w = 0;
+        var cs = getComputedStyle(track);
+        var gap = parseInt(cs.gap, 10) || parseInt(cs.columnGap, 10) || 0;
         originals.forEach(function (c) {
-          var s = getComputedStyle(track);
-          w += c.offsetWidth + (parseInt(s.gap, 10) || parseInt(s.columnGap, 10) || 0);
+          w += c.offsetWidth + gap;
         });
         return w;
       }
@@ -1101,27 +1088,39 @@
   }
 
   function boot() {
+    // Critical / functional layer — must be ready immediately.
     try {
+      initThemePersist();
       initCursor();
-      initMagnetic();
       initSectionMode();
       initActiveNav();
-      initCounters();
-      initWordReveal();
-      initVelocityMarquee();
-      initScramble();
-      initDragScroll();
-      initInfiniteSlider();
-      initRipple();
-      initScrollBar();
       initSmoothNav();
-      initThemePersist();
       initMobileDrawer();
-      initHeroAurora();
-      initEasterEgg();
     } catch (err) {
-      console.warn("playful.js: subsystem failed", err);
+      console.warn("playful.js: core failed", err);
     }
+
+    // [P15] Non-critical effects deferred to idle so they don't extend a long
+    // main-thread task during the critical render (the "effects after load"
+    // principle). They're all below-the-fold or interaction/hover driven.
+    function effects() {
+      try {
+        initMagnetic();
+        initCounters();
+        initWordReveal();
+        initScramble();
+        initDragScroll();
+        initInfiniteSlider();
+        initRipple();
+        initScrollBar();
+        initHeroAurora();
+        initEasterEgg();
+      } catch (err) {
+        console.warn("playful.js: effects failed", err);
+      }
+    }
+    if ("requestIdleCallback" in window) requestIdleCallback(effects, { timeout: 2000 });
+    else setTimeout(effects, 200);
   }
 
   if (document.readyState === "loading") {
