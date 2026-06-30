@@ -23,7 +23,7 @@ AWWWARDS and Lighthouse pull in opposite directions: jurors reward *motion, orig
 
 ### Phase 1a — Performance
 
-**Done & deployed (2026-06-28):**
+**Done & deployed:**
 
 - ~~**P1** — Preload the LCP image~~ ✅
 - ~~**P2** — Self-host Fraunces (Google Fonts removed)~~ ✅
@@ -34,30 +34,30 @@ AWWWARDS and Lighthouse pull in opposite directions: jurors reward *motion, orig
 - ~~**P7** — Hero text instant (remove letter-reveal)~~ ✅
 - ~~**P8** — Hero entrance instant (kill the opacity cascade)~~ ✅
 - ~~**P9** — `font-display:optional` on Fraunces~~ ✅ (fixed **mobile** CLS → 0)
-- ~~**P11** — Desktop CLS: render-blocking `styles.css`~~ ✅ — root cause was the **async CSS reflowing the hero ~297px** on cold load (not the font); **CLS now 0 on both form factors**. ⚠️ *desktop run intermittently reports `NO_LCP` (perf 0) — under investigation; likely PSI flakiness or a render-blocking interaction.*
-- ~~**P12** — icomoon `font-display` `block` → `swap`~~ ✅ *(applied; pending deploy)*
+- ~~**P11 (final)** — Desktop CLS~~ ✅ — real cause was the **async CSS reflowing the hero ~297 px** on cold load. Render-blocking the CSS fixed CLS but caused a render-blocking flag + intermittent `NO_LCP`, so it was **reverted**: proper **critical-CSS inlined** (generated with `critical`) + `styles.css` back to **async**. **CLS now 0 on both form factors, no render-blocking.**
+- ~~**P12** — icomoon `font-display` `block` → `swap`~~ ✅
+- ~~**P13** — Reduce forced reflow (`getComputedStyle` hoisted out of slider loop; nav height cached)~~ ✅ *(re-minify + deploy pending)*
+- ~~**P14** — Remove velocity-marquee (de-composited the marquee on scroll)~~ ✅ *(same deploy)*
+- ~~**P15** — Defer non-critical effects to `requestIdleCallback` (split `boot()` into core + effects)~~ ✅ *(same deploy)*
 
-**Latest live audit (after the P1–P9 deploy; lab, CrUX = No Data):**
+**Latest live audit (CLS-fix deploy; lab, CrUX = No Data):**
 
 | | Perf | A11y | BP | SEO | Key CWV |
 |---|---|---|---|---|---|
-| Mobile | **96** (was 87) | 92 | 96 | 92 | LCP 2.5s · TBT ~10ms · SI 2.9s · CLS 0.008 |
-| Desktop | **77 ▼** (was 87) | 96 | 96 | 92 | FCP 0.3s · LCP 0.5s · SI 0.6s · **CLS 0.688** 🔴 |
+| Mobile | **96** (was 87) | 92 | 96 | 92 | LCP 2.5s · TBT 0ms · SI 3.0s · **CLS 0** |
+| Desktop | **95** (was 87) | 96 | 96 | 92 | FCP 0.3s · LCP 0.5s · SI 0.7s · **CLS 0** |
 
-The hero text fix (P7/P8) worked — the LCP element moved off the text — but it **unmasked a font-swap layout shift** on the giant hero name, which now dominates desktop CLS. That's the #1 fix below.
+CLS is now **0 on both**, no render-blocking from our code. Desktop occasionally reports **`NO_LCP` (perf "error")** on a lab run — it's **intermittent Lighthouse flakiness** on this fast-loading animated hero (real browsers record LCP 0.5 s fine); a clean run scores 95.
 
-**Remaining — score blockers first:**
+**Remaining:**
 
 | # | Item (PSI insight) | Root cause | Fix step | Impact |
 |---|--------------------|-----------|----------|--------|
-| **P13** | **Forced reflow** | `playful.js` reads layout (`offsetWidth`/`getBoundingClientRect`/`getComputedStyle`) interleaved with writes — `initInfiniteSlider`, `initSectionMode`, aurora loop. | Batch reads before writes; cache widths; `ResizeObserver` instead of sync reads in scroll/raf. | INP / smoothness |
-| **P14** | **Non-composited animations — 76 elements** | Animations on non-GPU props (marquee `background-position`, shimmer, JS-mutated `animation-duration`). | Move marquees/shimmer to `transform`/`opacity`; drop the velocity-marquee JS; cut animated-node count. | main-thread paint |
-| **P15** | **Long main-thread tasks — 3 tasks** | Effect init (cursor, aurora, slider clone+measure) runs in big tasks on `DOMContentLoaded`. | Defer non-critical effects to `requestIdleCallback`/after `load`, chunked ("effects after load"). | TBT / INP |
-| **P16** | **Mobile LCP — photo render delay ~1.09 s** | Hero photo is now the LCP; its stable paint is delayed (grayscale filter / cutout `v4PhotoBreathe`). | Investigate what gates the photo paint; consider a smaller mobile `srcset`/AVIF variant. | Mobile 96 → ~100 |
+| **P16** | **Mobile LCP — photo render delay** | Hero photo is the mobile LCP (2.5 s); its stable paint is delayed (grayscale filter / cutout `v4PhotoBreathe` / decode). | Investigate what gates the photo paint; smaller mobile `srcset`/AVIF variant; stabilise the LCP element. | Mobile 96 → ~100 |
 | **P9→infra** | **Efficient cache lifetimes — 168 KiB** | GitHub Pages 10-min TTL. | Execute the **Cloudflare guide** (`P9-cloudflare-caching.md`) — your dashboard. | real-world repeat visits |
-| **P17** (opt.) | **Image pipeline · render-blocking 10 ms · DOM size** | Images already optimised (webp/responsive/lazy/dims); minor leftovers. | AVIF only if desired; trim marquee-duplicated DOM. Low value (assessed). | marginal |
+| **P17** (opt.) | **DOM size · 3rd-party email-decode · NO_LCP stability** | Cloudflare injects `email-decode.min.js` (render-blocking 40 ms); marquees duplicate DOM nodes; the desktop NO_LCP flakiness. | Disable Cloudflare "Email Obfuscation"; trim marquee-duplicated DOM; (optionally) make the hero photo a more stable LCP candidate. | marginal / real-world |
 
-**Do first: P11 + P12** — the only two blocking the score (desktop is failing purely on CLS). P13–P17 are diagnostics / real-world that barely move the lab number.
+P13–P15 are **diagnostics** (don't move the lab score; improve INP/runtime). The score levers left are **P16** (mobile LCP) and stabilising the desktop NO_LCP.
 
 ### Phase 1b — Accessibility / SEO / Best Practices (separate track, executed later)
 

@@ -1,0 +1,12 @@
+{
+  "name": "voaneves-site",
+  "private": true,
+  "scripts": {
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "critical": "^8.0.0",
+    "sass": "^1.77.8",
+    "terser": "^5.31.6"
+  }
+}

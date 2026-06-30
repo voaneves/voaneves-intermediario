@@ -9,7 +9,7 @@
  * NOTE: bump VERSION on every deploy (or wire it to your build hash) so returning
  * visitors never get served stale CSS/JS.
  */
-const VERSION = "v4-2026-06-28";
+const VERSION = "v-202606301809";
 const PRECACHE = "precache-" + VERSION;
 const RUNTIME = "runtime-" + VERSION;
 
