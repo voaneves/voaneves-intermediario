@@ -24,7 +24,7 @@
 
 :root {
   /* -- Typography family stack ------------------------------------------- */
-  --font-display:   "Fraunces", ui-serif, "New York", "Big Caslon", Georgia, serif;
+  --font-display:   "Fraunces", "Fraunces Fallback", ui-serif, "New York", "Big Caslon", Georgia, serif;
   --font-condensed: "Helvetica Neue Condensed Black", "HelveticaNeue-CondensedBold",
                     "Arial Narrow", Impact, sans-serif-condensed, sans-serif;
   --font-mono:      ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;

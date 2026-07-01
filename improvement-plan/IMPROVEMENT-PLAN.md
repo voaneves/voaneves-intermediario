@@ -40,32 +40,39 @@ AWWWARDS and Lighthouse pull in opposite directions: jurors reward *motion, orig
 - ~~**P14** — Remove velocity-marquee (de-composited the marquee on scroll)~~ ✅ *(same deploy)*
 - ~~**P15** — Defer non-critical effects to `requestIdleCallback` (split `boot()` into core + effects)~~ ✅ *(same deploy)*
 
-**Latest live audit (CLS-fix deploy; lab, CrUX = No Data):**
+**Latest live audit — 2026-07-01 (a11y-round deploy; lab, CrUX = No Data):**
 
 | | Perf | A11y | BP | SEO | Key CWV |
 |---|---|---|---|---|---|
-| Mobile | **96** (was 87) | 92 | 96 | 92 | LCP 2.5s · TBT 0ms · SI 3.0s · **CLS 0** |
-| Desktop | **95** (was 87) | 96 | 96 | 92 | FCP 0.3s · LCP 0.5s · SI 0.7s · **CLS 0** |
+| Mobile | ⚠️ *PSI infra error — re-run* | — | — | — | — |
+| Desktop | **99** | **96** | **96** | 92 | FCP 0.3s · LCP 0.5s · TBT 0ms · SI 0.8s · **CLS 0.068** |
 
-CLS is now **0 on both**, no render-blocking from our code. Desktop occasionally reports **`NO_LCP` (perf "error")** on a lab run — it's **intermittent Lighthouse flakiness** on this fast-loading animated hero (real browsers record LCP 0.5 s fine); a clean run scores 95.
+Two things surfaced since the CLS-fix deploy:
+- **Perf 100 → 99** because **CLS is now 0.068** (was 0). This is the cost of moving Fraunces to `font-display:swap` (done to kill the desktop `NO_LCP`): the web font reflows the hero as it loads. Culprit element `span.hero__orb` + `fraunces-normal/italic` + `socials`. → **P18**.
+- **Hero brush + custom cursor broken in this run** — the audit predates the `isTouch` fix (below); the preview shows the raw photo + stray text because a touchscreen-laptop gate had disabled the mouse effects.
 
-**Remaining:**
+**Remaining — Phase 1a (Performance):**
 
-| # | Item (PSI insight) | Root cause | Fix step | Impact |
-|---|--------------------|-----------|----------|--------|
-| **P16** | **Mobile LCP — photo render delay** | Hero photo is the mobile LCP (2.5 s); its stable paint is delayed (grayscale filter / cutout `v4PhotoBreathe` / decode). | Investigate what gates the photo paint; smaller mobile `srcset`/AVIF variant; stabilise the LCP element. | Mobile 96 → ~100 |
-| **P9→infra** | **Efficient cache lifetimes — 168 KiB** | GitHub Pages 10-min TTL. | Execute the **Cloudflare guide** (`P9-cloudflare-caching.md`) — your dashboard. | real-world repeat visits |
-| **P17** (opt.) | **DOM size · 3rd-party email-decode · NO_LCP stability** | Cloudflare injects `email-decode.min.js` (render-blocking 40 ms); marquees duplicate DOM nodes; the desktop NO_LCP flakiness. | Disable Cloudflare "Email Obfuscation"; trim marquee-duplicated DOM; (optionally) make the hero photo a more stable LCP candidate. | marginal / real-world |
+| # | Item (PSI) | Root cause | Fix | Impact |
+|---|---|---|---|---|
+| **P18** | **CLS 0.068** *(scored — the 100→99)* | Fraunces `swap` reflows the hero on font load; `hero__orb` + web fonts. | Font **metric overrides** (`size-adjust` / `ascent-override`) on the fallback so the swap doesn't reshape text; reserve the `hero__orb` box; **or** revert to `font-display:optional` once Rocket Loader is off (which independently removes the NO_LCP that forced `swap`). | Perf 99 → 100 |
+| **P16** | **Mobile LCP** (photo ~2.5s) | Hero photo paint delayed; mobile PSI errored this run. | smaller mobile `srcset`/AVIF; stabilise the photo LCP; **re-run mobile PSI**. | Mobile → ~100 |
+| *(Unscored)* | rocket-loader + email-decode (130ms), cache TTL (168 KiB), DOM 859, 21 non-composited color transitions, 1×52ms task | Cloudflare optimizations + design. | Cloudflare dashboard (Rocket Loader / Email Obfuscation / Browser Cache TTL); optional DOM trim. | none on score |
 
-P13–P15 are **diagnostics** (don't move the lab score; improve INP/runtime). The score levers left are **P16** (mobile LCP) and stabilising the desktop NO_LCP.
+### Phase 1b — Accessibility / SEO / Best Practices
 
-### Phase 1b — Accessibility / SEO / Best Practices (separate track, executed later)
+> **Contrast is theme-dependent.** The failing set differs between the **light/default** theme (what PSI measures) and **system-dark** (what the in-browser axe run measured). **Both must pass.**
 
-| Item | Unblocks | Effort |
-|------|----------|--------|
-| **A11y** — `aria-label` on icon-only links; fix the flagged color-contrast pairs; touch targets ≥44px. | A11y 92 → 100 | S–M |
-| **SEO** — canonical for the deploy context (self-fixes at root) + `Person` JSON-LD + `sameAs` + `hreflang` from `portfolio-data.json`. | SEO 92 → 100 | S |
-| **Best Practices** — tighten CSP (drop `* 'unsafe-inline' 'unsafe-eval'`); strip `console.log`s. | BP 96 → 100 | M |
+| Area | Status | Detail |
+|---|---|---|
+| **A11y — contrast (dark state)** | ✅ **fixed, axe-verified = 0**, pending deploy | intro/portfolio display `em` → new token `--signal-ink #d81f1f`; contact meta + "CONTATO — 07" eyebrow → dark ink on red; `region` (Topo wrapped in `<nav>`); `scrollable-region-focusable` (`.companies` → `tabindex=0`). |
+| **A11y — contrast (light state)** | ⬜ **OPEN — why A11y = 96** | `.intro__meta .k` (BASEADO EM / ATENDE / DISPONÍVEL PARA), `.project__num` (01–07), bento `.number` (01–05) + `.bold.highlight` ("A PARTIR DE R$…") — muted text on cream in the **light** theme. Darken these light-mode tokens (mirror the opacity bumps the dark blocks already carry). |
+| **Best Practices — console error** | ⬜ **OPEN — why BP = 96** | `TypeError: Cannot read properties of null (reading 'classList')` in `app.min.js` (an IntersectionObserver reveal callback observes a now-null element). Null-guard the callback. Then: tighten CSP (drop `* 'unsafe-inline' 'unsafe-eval'`), strip `console.log`s. |
+| **SEO** | ⬜ 92 | canonical self-resolves at root; add `Person` JSON-LD + `sameAs` + `hreflang` from `portfolio-data.json`. |
+
+**Functional regression shipped by the last build (not a score, but real):**
+
+- ~~**Cursor / brush-reveal / magnetic disabled on touchscreen laptops**~~ ✅ **fixed in source** — `isTouch` now requires *touch **and** no fine pointer*, so hybrid (touch + mouse) machines keep the effects. Pending the next build + deploy. *(This is why the hero preview in the 2026-07-01 audit shows the raw photo.)*
 
 Phase 2 (UX/AWWWARDS) and Phase 3 (content) remain separate tracks below.
 
