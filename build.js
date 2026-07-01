@@ -44,7 +44,14 @@ const sh = (cmd) => execSync(cmd, { stdio: "inherit", shell: true });
   console.log("\n[2/5] Compiling SCSS  (styles.css is generated — edit the .scss)…");
   if (fs.existsSync(SCSS)) {
     sh(`npx sass "${SCSS}" "${CSS}" --style=compressed --no-source-map`);
-    console.log("      ✓ styles.css");
+    // dart-sass can emit a UTF-8 BOM; strip it so downstream tools + git diffs stay clean
+    const cssOut = fs.readFileSync(CSS, "utf8");
+    if (cssOut.charCodeAt(0) === 0xfeff) {
+      fs.writeFileSync(CSS, cssOut.slice(1), "utf8");
+      console.log("      ✓ styles.css (BOM stripped)");
+    } else {
+      console.log("      ✓ styles.css");
+    }
   } else {
     console.log("      - no styles.scss found, skipping");
   }
