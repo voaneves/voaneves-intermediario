@@ -23,10 +23,15 @@
   var prefersReduced =
     window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
   var canHover =
     window.matchMedia &&
     window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  // "Touch device" = has touch AND no fine pointer. Hybrid laptops (touchscreen
+  // + mouse) report maxTouchPoints>0 but DO have a fine pointer, so they must NOT
+  // count as touch-only — otherwise the cursor / brush / magnetic effects get
+  // disabled for mouse users on touch-capable machines.
+  var isTouch =
+    ("ontouchstart" in window || navigator.maxTouchPoints > 0) && !canHover;
 
   // ============================================================
   // 1. CURSOR — dot + ring + label + image preview

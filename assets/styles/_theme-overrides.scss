@@ -474,3 +474,12 @@
               border-color .35s ease;
 }
 
+
+/* ── A11y: contact section eyebrow ("CONTATO — 07") ─────────
+   The red bg lives on the inner .contact-content; the eyebrow sits ABOVE it,
+   over the page body — which stays a warm cream in every theme (the auto-dark
+   path never darkens this backdrop). So the JS-applied `data-on-dark` white
+   text renders near-invisible (1.17:1). Force it to ink: dark-on-cream reads at
+   ~12:1 in every mode. */
+.contact .section-tag[data-on-dark]{ color: var(--ink); }
+

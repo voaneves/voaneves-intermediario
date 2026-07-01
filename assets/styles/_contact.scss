@@ -20,7 +20,9 @@
 .contact .contact-marquee{ display: none !important; }
 .contact .section-tag{ padding: 0; }
 .contact .contact-content{
-  background: var(--signal) !important;
+  /* Forced to the vibrant red in every theme so the dark meta text below passes
+     AA (in light-mode --signal darkens to #c41a1a, where dark-on-red would fail). */
+  background: #ff3838 !important;
   padding: 0 !important;
 }
 .contact__statement{
@@ -68,10 +70,12 @@
   border-top: 1px solid rgba(255,255,255,.25);
 }
 .contact__meta > div{ display: flex; flex-direction: column; gap: 6px; }
-.contact__meta .k{ font-family: var(--font-mono); font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; opacity: .7; }
-.contact__meta .v{ font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; }
-.contact__meta .v a{ color: #fff; text-decoration: underline; text-underline-offset: 4px; }
-.contact__meta .v a:hover{ color: var(--ink); }
+/* Meta grid sits on the vibrant red (#ff3838): white text only reaches 3.57:1,
+   so the labels + values use dark ink, which reads at 5.2–5.9:1 (AA) on red. */
+.contact__meta .k{ font-family: var(--font-mono); font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ink); opacity: .85; }
+.contact__meta .v{ font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; color: var(--ink); }
+.contact__meta .v a{ color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+.contact__meta .v a:hover{ opacity: .65; }
 
 .contact__icons{
   display: flex; gap: 12px; flex-wrap: wrap;
