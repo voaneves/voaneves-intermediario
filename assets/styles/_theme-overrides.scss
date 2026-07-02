@@ -164,6 +164,10 @@
 .v4.light-mode .bento__item .title h2{ color: var(--ink) !important; }
 .v4.light-mode .bento__item p{ color: rgba(0,0,0,.70) !important; }
 .v4.light-mode .bento__item p em{ color: var(--ink); }
+/* Bento card is a LIGHT surface in light-mode — the brighter #ff3838 (tuned for the
+   dark card) would fail here, so restore the dark signal red (#c41a1a, ~5.2:1). */
+.v4.light-mode .bento__item .title h2 .number,
+.v4.light-mode .bento__item .highlight{ color: var(--signal) !important; }
 .v4.light-mode .bento__item .title h2:after{ background: rgba(0,0,0,.08); }
 .v4.light-mode .stat{ color: var(--ink); }
 .v4.light-mode .portfolio__list{ border-top-color: var(--line); }

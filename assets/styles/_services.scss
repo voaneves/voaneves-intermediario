@@ -91,7 +91,9 @@
   width: auto !important; height: auto !important; aspect-ratio: auto !important;
   font-size: .72rem !important;
   font-weight: 600 !important;
-  color: var(--signal) !important;
+  /* On the dark bento card the default #f50000 only hits 4.04:1 — use the brighter
+     brand red (#ff3838 = 4.9:1). light-mode restores the dark #c41a1a below. */
+  color: #ff3838 !important;
   letter-spacing: .2em !important;
   margin: 0 !important;
 }
@@ -113,7 +115,7 @@
   font-family: var(--font-mono) !important;
   font-size: .8rem !important;
   letter-spacing: .15em;
-  color: var(--signal) !important;
+  color: #ff3838 !important;
   text-transform: uppercase;
   padding: 0 !important;
 }
