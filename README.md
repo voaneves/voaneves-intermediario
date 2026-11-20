@@ -5,7 +5,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/voaneves/voaneves-intermediario/main/assets/logo/logo-dark.svg" />
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/voaneves/voaneves-intermediario/main/assets/logo/logo-light.svg" />
-  <img alt="Logotipo voaneves-intermediario: disco dividido em tinta e papel com o monograma VI e um ponto vermelho" src="https://raw.githubusercontent.com/voaneves/voaneves-intermediario/main/assets/logo/logo-light.svg" width="112" height="112" />
+  <img alt="voaneves-intermediario logo: stacked layers, with a red dot for the current layer" src="https://raw.githubusercontent.com/voaneves/voaneves-intermediario/main/assets/logo/logo-light.svg" width="112" height="112" />
 </picture>
 
 <h1>voaneves-intermediario</h1>

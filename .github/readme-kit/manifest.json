@@ -7,6 +7,7 @@
   "tagline": "Staging copy of the portfolio site, built from SASS partials with a Node build script.",
   "description": "Staging copy of the portfolio website, with SASS sources and a Node build script. Not published as a landing.",
   "logo": {
+    "glyph": "layers",
     "mark": "VI"
   },
   "buttons": [
