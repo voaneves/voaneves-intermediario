@@ -1,0 +1,46 @@
+{
+  "repo": "voaneves-intermediario",
+  "branch": "main",
+  "lang": "en",
+  "license": "MIT",
+  "name": "voaneves-intermediario",
+  "tagline": "Staging copy of the portfolio site, built from SASS partials with a Node build script.",
+  "description": "Staging copy of the portfolio website, with SASS sources and a Node build script. Not published as a landing.",
+  "logo": {
+    "mark": "VI"
+  },
+  "buttons": [
+    {
+      "id": "css",
+      "text": "CSS architecture",
+      "kind": "primary",
+      "font": "sans",
+      "href": "https://github.com/voaneves/voaneves-intermediario#2-css-architecture"
+    },
+    {
+      "id": "build",
+      "text": "Build commands",
+      "kind": "secondary",
+      "font": "sans",
+      "href": "https://github.com/voaneves/voaneves-intermediario#25-build-commands"
+    },
+    {
+      "id": "hire",
+      "text": "Let's talk",
+      "kind": "primary",
+      "font": "sans",
+      "href": "https://voaneves.com/en/#contact",
+      "landing": false
+    },
+    {
+      "id": "site",
+      "text": "voaneves.com",
+      "kind": "secondary",
+      "font": "sans",
+      "href": "https://voaneves.com/en/",
+      "landing": false
+    }
+  ],
+  "landing": false,
+  "live_url": null
+}
